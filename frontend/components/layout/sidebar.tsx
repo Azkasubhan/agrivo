@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { BarChart3, Cloud, User, Lightbulb, Leaf, ChevronRight, ArrowLeft, Sparkles, LogOut } from 'lucide-react';
 import { useState } from 'react';
@@ -30,12 +31,13 @@ export function Sidebar() {
       {/* Logo */}
       <div className="ag-sidebar-logo">
         <Link href="/dashboard" className="ag-sidebar-brand">
-          <div className="ag-sidebar-icon-wrap">
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-              <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 3c1.1 0 2 .9 2 2v1h-4V7c0-1.1.9-2 2-2zm3 9H7v-1c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v1z" fill="white"/>
-            </svg>
-          </div>
-          {!collapsed && <span className="ag-sidebar-brand-text">AGRIVO</span>}
+          {!collapsed ? (
+            <Image src="/logofix.PNG" alt="AGRIVO" width={110} height={40} className="ag-sidebar-logo-img" priority />
+          ) : (
+            <div className="ag-sidebar-icon-wrap">
+              <Image src="/icon-light-32x32.png" alt="A" width={20} height={20} />
+            </div>
+          )}
         </Link>
         <button className="ag-sidebar-collapse-btn" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle sidebar">
           <ChevronRight size={16} style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform .3s' }} />
@@ -100,15 +102,12 @@ export function Sidebar() {
           display: flex; align-items: center; gap: .75rem;
           text-decoration: none; overflow: hidden; white-space: nowrap;
         }
+        .ag-sidebar-logo-img { object-fit:contain; }
         .ag-sidebar-icon-wrap {
           width: 32px; height: 32px;
           background: #14532D; border-radius: 10px;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
-        }
-        .ag-sidebar-brand-text {
-          font-size: .9rem; font-weight: 800; letter-spacing: .08em;
-          color: #161616;
         }
         .ag-sidebar-collapse-btn {
           display: flex; align-items: center; justify-content: center;
