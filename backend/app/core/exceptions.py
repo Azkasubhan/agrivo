@@ -119,6 +119,17 @@ class FieldNotFoundError(AppError):
         )
 
 
+class NotificationNotFoundError(AppError):
+    """Raised when a notification does not exist or is not owned by the current user."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="NOTIFICATION_NOT_FOUND",
+            message="Notifikasi tidak ditemukan.",
+            status_code=404,
+        )
+
+
 class RiceVarietyNotFoundError(AppError):
     """Raised when the given rice variety code does not match any reference row."""
 
