@@ -11,3 +11,9 @@ python-json-logger==2.0.7
 black==24.10.0
 isort==5.13.2
 ruff==0.6.9
+# AI / ML
+xgboost==2.1.1
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==1.26.4
+joblib==1.4.2

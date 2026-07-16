@@ -1,1 +1,1 @@
-"""Training pipeline package reserved for later milestones."""
+"""Training scripts for the AGRIVO AI Engine."""
