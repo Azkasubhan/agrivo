@@ -1,0 +1,24 @@
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+include = "\\.pyi?$"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+src_paths = ["app", "tests"]
+skip = ["alembic/env.py", "alembic/versions/b12a3fcacce1_seed_reference_data.py"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["app", "tests"]
+extend-exclude = ["alembic/env.py", "alembic/versions/b12a3fcacce1_seed_reference_data.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N"]
+ignore = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
