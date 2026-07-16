@@ -83,3 +83,24 @@ class UserRepository:
             token.is_used = True
             token.revoked_at = now
         self.session.commit()
+
+    def update_user(self, user: "User", changes: dict) -> "User":
+        """Apply partial updates to a user's profile fields."""
+        for attr, value in changes.items():
+            setattr(user, attr, value)
+        self.session.commit()
+        self.session.refresh(user)
+        return user
+
+    def update_notification_preference(
+        self, user: "User", changes: dict
+    ) -> "NotificationPreference | None":
+        """Apply partial updates to a user's notification preferences."""
+        pref = user.notification_preference
+        if pref is None:
+            return None
+        for attr, value in changes.items():
+            setattr(pref, attr, value)
+        self.session.commit()
+        self.session.refresh(pref)
+        return pref

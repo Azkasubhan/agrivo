@@ -1,11 +1,84 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { apiClient } from '@/lib/api-client';
 
 export function ProfileContent() {
+  const [profile, setProfile] = useState<any>(null);
+  const [fields, setFields] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  // Notifications state matching DB fields
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [recAlertEnabled, setRecAlertEnabled] = useState(true);
+  const [weatherAlertEnabled, setWeatherAlertEnabled] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [profileRes, fieldsRes] = await Promise.all([
+          apiClient<{ data: any }>('/users/me'),
+          apiClient<{ data: { items: any[] } | any[] }>('/fields'),
+        ]);
+
+        const uData = profileRes.data;
+        setProfile(uData);
+
+        const items = (fieldsRes.data as any).items || fieldsRes.data;
+        setFields(items);
+
+        // Prepopulate notifications
+        if (uData.notification_preference) {
+          setWhatsappEnabled(uData.notification_preference.whatsapp_enabled);
+          setRecAlertEnabled(uData.notification_preference.recommendation_change_alert);
+          setWeatherAlertEnabled(uData.notification_preference.weather_risk_alert);
+        }
+      } catch (err) {
+        console.error('Failed to load profile or fields', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleSaveNotifications = async () => {
+    setUpdating(true);
+    setMessage(null);
+    try {
+      await apiClient('/users/me/notifications', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          whatsapp_enabled: whatsappEnabled,
+          recommendation_change_alert: recAlertEnabled,
+          weather_risk_alert: weatherAlertEnabled,
+        }),
+      });
+      setMessage('Notification preferences updated successfully!');
+    } catch (err) {
+      console.error('Failed to update notification preferences', err);
+      setMessage('Failed to update preferences.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: '3rem', textAlign: 'center', color: '#14532D', fontWeight: 600 }}>
+        Loading profile...
+      </div>
+    );
+  }
+
+  const initials = profile?.full_name ? profile.full_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'US';
+  const totalArea = fields.reduce((sum, f) => sum + parseFloat(f.field_area_ha || 0), 0).toFixed(1);
+
   return (
     <div className="pc-root">
-
       {/* Hero */}
       <div className="pc-hero">
         <div className="pc-hero-img-wrap">
@@ -13,10 +86,10 @@ export function ProfileContent() {
           <div className="pc-hero-overlay" />
         </div>
         <div className="pc-hero-content">
-          <div className="pc-avatar">FH</div>
+          <div className="pc-avatar">{initials}</div>
           <div>
-            <h1 className="pc-hero-name">Pak Fajar Hartono</h1>
-            <p className="pc-hero-loc">📍 Klaten, Central Java, Indonesia</p>
+            <h1 className="pc-hero-name">{profile?.full_name || 'Agrivo Farmer'}</h1>
+            <p className="pc-hero-loc">📍 {profile?.subdistrict || 'Klaten'}, {profile?.province || 'Jawa Tengah'}</p>
           </div>
         </div>
       </div>
@@ -28,12 +101,11 @@ export function ProfileContent() {
             <div className="pc-card-title">Farm Overview</div>
             <div className="pc-info-rows">
               {[
-                { label: 'Total Area', val: '56.5 ha' },
-                { label: 'Active Fields', val: '3' },
+                { label: 'Total Area', val: `${totalArea} ha` },
+                { label: 'Active Fields', val: fields.length.toString() },
                 { label: 'Primary Crop', val: 'Rice (Padi)' },
-                { label: 'Farming Since', val: '1998' },
-                { label: 'Irrigation Method', val: 'Alternate Wetting & Drying' },
-                { label: 'Water Source', val: 'Subak irrigation system' },
+                { label: 'Province', val: profile?.province || 'Jawa Tengah' },
+                { label: 'Subdistrict', val: profile?.subdistrict || 'Klaten' },
               ].map(r => (
                 <div key={r.label} className="pc-info-row">
                   <span className="pc-info-label">{r.label}</span>
@@ -47,11 +119,8 @@ export function ProfileContent() {
             <div className="pc-card-title">AGRIVO Account</div>
             <div className="pc-info-rows">
               {[
-                { label: 'Member since', val: 'March 2024' },
-                { label: 'Plan', val: 'Farmer Pro' },
-                { label: 'Language', val: 'Bahasa Indonesia' },
-                { label: 'WhatsApp alerts', val: 'Enabled ✓' },
-                { label: 'Notifications', val: 'Daily 06:00 AM' },
+                { label: 'Email', val: profile?.email || '' },
+                { label: 'Phone Number', val: profile?.phone_number || '-' },
               ].map(r => (
                 <div key={r.label} className="pc-info-row">
                   <span className="pc-info-label">{r.label}</span>
@@ -62,8 +131,71 @@ export function ProfileContent() {
           </div>
         </div>
 
-        {/* Right: impact stats + achievements */}
+        {/* Right: impact stats + settings */}
         <div className="pc-right">
+          {/* Notifications Settings Panel */}
+          <div className="pc-card">
+            <div className="pc-card-title">Alert & Notification Settings</div>
+            <p className="pc-card-sub">Receive daily AWD recommendations and weather risks directly on your device.</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input
+                  type="checkbox"
+                  checked={whatsappEnabled}
+                  onChange={(e) => setWhatsappEnabled(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#14532D' }}
+                />
+                Enable WhatsApp Alerts (Notifikasi WhatsApp)
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input
+                  type="checkbox"
+                  checked={recAlertEnabled}
+                  onChange={(e) => setRecAlertEnabled(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#14532D' }}
+                />
+                Alert on Recommendation Changes (Notifikasi Rekomendasi)
+              </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input
+                  type="checkbox"
+                  checked={weatherAlertEnabled}
+                  onChange={(e) => setWeatherAlertEnabled(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#14532D' }}
+                />
+                Alert on Extreme Weather Risks (Notifikasi Cuaca Ekstrem)
+              </label>
+            </div>
+
+            <button
+              onClick={handleSaveNotifications}
+              disabled={updating}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1.5rem',
+                background: '#14532D',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '10px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: updating ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s',
+              }}
+            >
+              {updating ? 'Saving Changes...' : 'Save Notification Preferences'}
+            </button>
+
+            {message && (
+              <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: message.includes('Failed') ? '#C0392B' : '#14532D', fontWeight: 600 }}>
+                {message}
+              </div>
+            )}
+          </div>
+
           <div className="pc-card">
             <div className="pc-card-title">Your Environmental Impact</div>
             <p className="pc-card-sub">Cumulative savings since joining AGRIVO — March 2024 to present.</p>
@@ -71,39 +203,13 @@ export function ProfileContent() {
               {[
                 { icon:'💧', val:'1.8M L', label:'Water Saved', color:'#e8f4fd' },
                 { icon:'🌍', val:'−2.4 t', label:'CO₂-eq Avoided', color:'#f0f7ec' },
-                { icon:'🌾', val:'5.8 t/ha', label:'Best Yield', color:'#faf3e8' },
+                { icon:'🌾', val:'6.1 t/ha', label:'Best Yield', color:'#faf3e8' },
                 { icon:'📅', val:'472', label:'Days Using AWD', color:'#f5f0fa' },
               ].map(m => (
                 <div key={m.label} className="pc-impact-card" style={{ background: m.color }}>
                   <div className="pc-imp-icon">{m.icon}</div>
                   <div className="pc-imp-val">{m.val}</div>
                   <div className="pc-imp-lbl">{m.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pc-card">
-            <div className="pc-card-title">Achievements</div>
-            <div className="pc-achievements">
-              {[
-                { icon:'🏅', title:'Early Adopter', desc:'Joined AGRIVO in its first year', earned:true },
-                { icon:'💧', title:'Water Saver', desc:'Saved over 1 million liters', earned:true },
-                { icon:'🌍', title:'Climate Champion', desc:'Reduced net GWP by 20%+', earned:true },
-                { icon:'📊', title:'Data Farmer', desc:'30+ consecutive days of field logging', earned:false },
-                { icon:'🤝', title:'Community Leader', desc:'Referred 5+ farmers to AGRIVO', earned:false },
-              ].map(a => (
-                <div key={a.title} className={`pc-achievement${a.earned ? '' : ' locked'}`}>
-                  <div className="pc-ach-icon">{a.icon}</div>
-                  <div className="pc-ach-body">
-                    <div className="pc-ach-title">{a.title}</div>
-                    <div className="pc-ach-desc">{a.desc}</div>
-                  </div>
-                  {a.earned ? (
-                    <div className="pc-ach-badge">Earned</div>
-                  ) : (
-                    <div className="pc-ach-locked">Locked</div>
-                  )}
                 </div>
               ))}
             </div>
@@ -141,16 +247,6 @@ export function ProfileContent() {
         .pc-imp-icon { font-size: 1.4rem; margin-bottom: .25rem; }
         .pc-imp-val { font-size: 1.4rem; font-weight: 800; color: #161616; }
         .pc-imp-lbl { font-size: .68rem; color: #787878; font-weight: 500; }
-
-        .pc-achievements { display: flex; flex-direction: column; gap: .75rem; }
-        .pc-achievement { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 14px; background: #FAF8F3; border: 1px solid #E8E2D9; }
-        .pc-achievement.locked { opacity: .45; filter: grayscale(.5); }
-        .pc-ach-icon { font-size: 1.4rem; flex-shrink: 0; width: 40px; height: 40px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #E8E2D9; }
-        .pc-ach-body { flex: 1; }
-        .pc-ach-title { font-size: .875rem; font-weight: 700; color: #161616; }
-        .pc-ach-desc { font-size: .72rem; color: #787878; margin-top: .15rem; }
-        .pc-ach-badge { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #14532D; background: #e8f5ee; padding: .25rem .65rem; border-radius: 999px; flex-shrink: 0; }
-        .pc-ach-locked { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #a09589; background: #F0EDE6; padding: .25rem .65rem; border-radius: 999px; flex-shrink: 0; }
 
         @media (max-width: 900px) {
           .pc-body { grid-template-columns: 1fr; }

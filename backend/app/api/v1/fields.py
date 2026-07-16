@@ -74,3 +74,61 @@ def delete_field(
     """Soft delete a field owned by the authenticated user, preserving history."""
     FieldService(session).delete(current_user.id, field_id)
     return Response(status_code=204)
+
+
+@router.get("/{field_id}/weather", summary="Get weather for a field")
+def get_field_weather(
+    field_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+):
+    """Return weather forecast and computed derived agronomic inputs for a field."""
+    from app.services.weather_service import WeatherService  # noqa: PLC0415
+    field_service = FieldService(session)
+    field = field_service._get_owned_or_raise(current_user.id, field_id)
+
+    weather_service = WeatherService(session)
+    snapshot = weather_service.get_weather_for_field(field)
+    data = weather_service.format_weather_response(snapshot)
+
+    return build_success_response(
+        message="Informasi cuaca berhasil diambil.",
+        data=data,
+    )
+
+
+@router.post("/{field_id}/recommendations", summary="Trigger a new AI recommendation", status_code=201)
+def trigger_recommendation(
+    field_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+):
+    """Generate a new AI recommendation and prediction for a field."""
+    from app.services.recommendation_service import RecommendationService  # noqa: PLC0415
+    result = RecommendationService(session).generate_recommendation(current_user.id, field_id)
+    return build_success_response(
+        message="Rekomendasi berhasil dibuat.",
+        data=result,
+        status_code=201,
+    )
+
+
+@router.get("/{field_id}/recommendations", summary="List recommendations for a field")
+def list_field_recommendations(
+    field_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+):
+    """Return a paginated list of recommendations generated for a field."""
+    from app.services.recommendation_service import RecommendationService  # noqa: PLC0415
+    result = RecommendationService(session).list_recommendations_for_field(
+        current_user.id, field_id, page, page_size
+    )
+    return build_success_response(
+        message="Daftar rekomendasi lahan.",
+        data=result,
+    )
+
+

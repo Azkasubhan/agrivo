@@ -164,7 +164,10 @@ def train() -> None:
 
 def _run_decision_matrix_test(artifacts: dict) -> None:
     """Verify all 22 scenarios from the decision matrix produce the expected strategy."""
-    from app.ai_engine.training.generate_synthetic_dataset import DECISION_MATRIX, VARIETIES  # noqa: E402
+    from app.ai_engine.training.generate_synthetic_dataset import (  # noqa: E402
+        DECISION_MATRIX,
+        VARIETIES,
+    )
 
     clf: XGBClassifier = artifacts["classifier"]
     encoders: dict = artifacts["feature_encoders"]
@@ -189,7 +192,13 @@ def _run_decision_matrix_test(artifacts: dict) -> None:
 
         # Mask to only valid candidates (rule engine)
         from app.ai_engine.rule_engine import get_valid_candidates  # noqa: E402
-        from app.ai_engine.schemas import GrowthStage, IrrigationSystemTypeEnum, SoilTypeEnum, WaterBalanceIndex, WeatherRiskIndex  # noqa: E402
+        from app.ai_engine.schemas import (  # noqa: E402
+            GrowthStage,
+            IrrigationSystemTypeEnum,
+            SoilTypeEnum,
+            WaterBalanceIndex,
+            WeatherRiskIndex,
+        )
 
         valid_candidates, _ = get_valid_candidates(
             growth_stage=GrowthStage(stage),

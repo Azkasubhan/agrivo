@@ -112,7 +112,6 @@ def infer(engine_input: AIEngineInput) -> AIEngineOutput:
     )
 
     # --- Assemble output ---
-    from app.ai_engine.ml_model import get_model_version  # noqa: PLC0415
     try:
         mv = model_version if not ml_failed else "rule_only"
     except Exception:  # noqa: BLE001

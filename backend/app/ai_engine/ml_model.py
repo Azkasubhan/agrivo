@@ -113,7 +113,7 @@ def predict(
     importances = clf.feature_importances_
     feature_names = _CAT_FEATURES + _NUM_FEATURES
     top_features = sorted(
-        zip(feature_names, importances), key=lambda t: t[1], reverse=True
+        zip(feature_names, importances, strict=False), key=lambda t: t[1], reverse=True
     )[:3]
 
     quantitative["_top_features"] = [
