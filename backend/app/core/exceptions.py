@@ -9,6 +9,21 @@ from app.core.responses import build_error_response
 
 logger = logging.getLogger(__name__)
 
+# Maps a single-field Pydantic validation failure to the specific error code
+# defined in docs/08-security-validation.md § 3. Falls back to the generic
+# VALIDATION_ERROR code when multiple fields fail or the field is unmapped.
+_VALIDATION_ERROR_CODES: dict[str, str] = {
+    "phone_number": "INVALID_PHONE_FORMAT",
+    "password": "WEAK_PASSWORD",
+    "email": "INVALID_EMAIL_FORMAT",
+    "latitude": "LATITUDE_OUT_OF_RANGE",
+    "longitude": "LONGITUDE_OUT_OF_RANGE",
+    "soil_type": "INVALID_SOIL_TYPE",
+    "field_area_ha": "FIELD_AREA_INVALID",
+    "previous_irrigation_method": "INVALID_IRRIGATION_METHOD",
+    "irrigation_system_type": "INVALID_IRRIGATION_SYSTEM_TYPE",
+}
+
 
 class AppError(Exception):
     """Base application exception for consistent API error mapping."""
@@ -57,6 +72,17 @@ class InvalidCredentialsError(AppError):
             code="INVALID_CREDENTIALS",
             message="Nomor telepon atau password salah.",
             status_code=401,
+        )
+
+
+class TooManyRequestsError(AppError):
+    """Raised when a client exceeds a rate limit on a sensitive endpoint."""
+
+    def __init__(self, message: str = "Terlalu banyak percobaan, coba lagi nanti.") -> None:
+        super().__init__(
+            code="RATE_LIMIT_EXCEEDED",
+            message=message,
+            status_code=429,
         )
 
 
@@ -149,15 +175,20 @@ def register_exception_handlers(application: FastAPI) -> None:
 
     @application.exception_handler(RequestValidationError)
     async def handle_validation_exception(_: Request, exc: RequestValidationError):
+        errors = exc.errors()
         details = [
             {
                 "field": ".".join(str(part) for part in error["loc"] if part != "body"),
                 "issue": error["msg"],
             }
-            for error in exc.errors()
+            for error in errors
         ]
+        code = "VALIDATION_ERROR"
+        if len(errors) == 1:
+            field_name = next((str(part) for part in errors[0]["loc"] if part != "body"), None)
+            code = _VALIDATION_ERROR_CODES.get(field_name, code)
         return build_error_response(
-            code="VALIDATION_ERROR",
+            code=code,
             message="Request tidak valid.",
             details=details,
             status_code=422,

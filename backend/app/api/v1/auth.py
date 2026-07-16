@@ -1,6 +1,6 @@
 """Authentication endpoints: register, login, refresh."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db_session
@@ -24,9 +24,10 @@ def register(payload: RegisterRequest, session: Session = Depends(get_db_session
 
 
 @router.post("/login", summary="Authenticate and issue access/refresh tokens")
-def login(payload: LoginRequest, session: Session = Depends(get_db_session)):
+def login(payload: LoginRequest, request: Request, session: Session = Depends(get_db_session)):
     """Authenticate a user and return a new token pair."""
-    tokens = AuthService(session).login(payload.phone_number, payload.password)
+    client_ip = request.client.host if request.client else "unknown"
+    tokens = AuthService(session).login(payload.phone_number, payload.password, client_ip)
     return build_success_response(message="Login berhasil.", data=tokens.model_dump(mode="json"))
 
 

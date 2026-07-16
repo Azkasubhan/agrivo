@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="")
     access_token_expire_minutes: int = Field(default=15)
     refresh_token_expire_days: int = Field(default=7)
+    login_rate_limit_max_attempts: int = Field(default=5)
+    login_rate_limit_window_minutes: int = Field(default=15)
     weather_cache_ttl_hours: int = Field(default=6)
     max_planting_age_days: int = Field(default=150)
     max_field_area_ha: int = Field(default=25)
