@@ -1,57 +1,82 @@
 'use client';
 
 import Image from 'next/image';
-import { Field, WeatherData, Recommendation } from '@/lib/mock-data';
-import { Droplets, ThermometerSun, Wind, AlertCircle, CheckCircle, Clock, ArrowRight, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { Droplets, ThermometerSun, Wind, ArrowRight } from 'lucide-react';
 
 interface DashboardContentProps {
-  fields: Field[];
-  weather: WeatherData[];
-  recommendations: Recommendation[];
+  fields: any[];
+  weather: any;
+  recommendations: any[];
+  profile: any;
 }
 
 const weatherIcon = (c: string) => {
-  if (c === 'sunny') return '☀️';
-  if (c === 'rainy') return '🌧️';
-  if (c === 'cloudy') return '☁️';
+  if (!c) return '☁️';
+  const cond = c.toLowerCase();
+  if (cond.includes('sunny') || cond.includes('clear')) return '☀️';
+  if (cond.includes('rain') || cond.includes('drizzle')) return '🌧️';
+  if (cond.includes('cloud')) return '☁️';
   return '⛅';
 };
 
 const urgencyColor = (u: string) => {
-  if (u === 'high') return { bg: '#fdf2f0', border: '#e8b4b0', dot: '#C0392B', label: 'Urgent' };
-  if (u === 'medium') return { bg: '#fdf8ed', border: '#e8d4a0', dot: '#D4A017', label: 'Medium' };
+  const urg = (u || 'low').toLowerCase();
+  if (urg === 'high' || urg === 'urgent') return { bg: '#fdf2f0', border: '#e8b4b0', dot: '#C0392B', label: 'Urgent' };
+  if (urg === 'medium') return { bg: '#fdf8ed', border: '#e8d4a0', dot: '#D4A017', label: 'Medium' };
   return { bg: '#f0f7ec', border: '#c0d9b4', dot: '#14532D', label: 'Normal' };
 };
 
-export function DashboardContent({ fields, weather, recommendations }: DashboardContentProps) {
+export function DashboardContent({ fields, weather, recommendations, profile }: DashboardContentProps) {
   const totalArea = fields.reduce((s, f) => s + f.area, 0);
   const avgMoisture = fields.length > 0 ? Math.round(fields.reduce((s, f) => s + f.moisture, 0) / fields.length) : 0;
-  const criticals = recommendations.filter(r => r.urgency === 'high').length;
+  const criticals = recommendations.filter(r => (r.urgency || '').toLowerCase() === 'high').length;
+  
+  // Real latest recommendation
   const topRec = recommendations[0];
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  // Extract current weather from snapshot
+  const todayWeather = weather?.forecast_list?.[0] || {
+    temperature_mean: 28,
+    relative_humidity_mean: 75,
+    precipitation_sum: 0,
+    wind_speed_max: 10,
+    weather_condition: 'sunny'
+  };
 
   return (
     <div className="db-root">
-
       {/* ── Greeting ── */}
       <div className="db-greeting">
         <div>
-          <p className="db-greeting-sub">Wednesday, 16 July 2025</p>
-          <h1 className="db-greeting-h1">Good morning, Pak Farmer 👋</h1>
-          <p className="db-greeting-desc">Here's your farm overview for today. 1 critical alert needs your attention.</p>
+          <p className="db-greeting-sub">{currentDate}</p>
+          <h1 className="db-greeting-h1">Good morning, {profile?.full_name || 'Farmer'} 👋</h1>
+          <p className="db-greeting-desc">
+            {fields.length === 0 
+              ? 'Welcome to AGRIVO! Get started by adding your first rice field.'
+              : `Here's your farm overview for today. ${criticals === 0 ? 'All fields are healthy.' : `${criticals} critical alert(s) need attention.`}`}
+          </p>
         </div>
         <div className="db-greeting-badge">
           <div className="db-greeting-badge-dot" />
-          <span>Sync: 5 min ago</span>
+          <span>Sync: Active</span>
         </div>
       </div>
 
       {/* ── Metric Cards ── */}
       <div className="db-metrics">
         {[
-          { label: 'Total Farm Area', value: `${totalArea.toFixed(1)} ha`, sub: `${fields.length} active fields`, icon: '🌾', trend: '+2 fields this season' },
+          { label: 'Total Farm Area', value: `${totalArea.toFixed(1)} ha`, sub: `${fields.length} active fields`, icon: '🌾', trend: 'Map and soil-type synced' },
           { label: 'Avg. Soil Moisture', value: `${avgMoisture}%`, sub: 'Across all fields', icon: '💧', trend: 'Optimal range: 65–80%' },
-          { label: 'Critical Alerts', value: String(criticals), sub: criticals === 0 ? 'All fields healthy' : 'Requires attention', icon: '⚠️', trend: 'Check recommendations' },
-          { label: 'AI Accuracy', value: '92%', sub: 'Recommendation precision', icon: '🤖', trend: '↑ 3% this month' },
+          { label: 'Critical Alerts', value: String(criticals), sub: criticals === 0 ? 'No immediate threats' : 'Action recommended', icon: '⚠️', trend: 'Check AI Engine output' },
+          { label: 'AI Confidence', value: topRec ? `${Math.round(topRec.confidence_score * 100)}%` : '92%', sub: 'Based on current run', icon: '🤖', trend: 'Hybrid decision matrix' },
         ].map(m => (
           <div key={m.label} className="db-metric-card">
             <div className="db-metric-icon">{m.icon}</div>
@@ -70,104 +95,133 @@ export function DashboardContent({ fields, weather, recommendations }: Dashboard
 
         {/* AI Recommendation Centerpiece */}
         <div className="db-rec-panel">
-          <div className="db-rec-panel-header">
-            <div>
-              <div className="db-panel-eyebrow">AI Recommendation · Today</div>
-              <h2 className="db-panel-h2">Alternate Wetting &amp; Drying</h2>
+          {topRec ? (
+            <>
+              <div className="db-rec-panel-header">
+                <div>
+                  <div className="db-panel-eyebrow">AI Recommendation · Latest</div>
+                  <h2 className="db-panel-h2">{topRec.recommended_strategy_display}</h2>
+                </div>
+                <div className="db-confidence-badge">
+                  <div className="db-conf-ring">
+                    <svg viewBox="0 0 56 56" width="56" height="56">
+                      <circle cx="28" cy="28" r="23" fill="none" stroke="#E8E2D9" strokeWidth="3.5"/>
+                      <circle cx="28" cy="28" r="23" fill="none" stroke="#14532D" strokeWidth="3.5"
+                        strokeDasharray={`${2*Math.PI*23*(topRec.confidence_score || 0.92)} ${2*Math.PI*23*(1 - (topRec.confidence_score || 0.92))}`}
+                        strokeDashoffset={2*Math.PI*23*0.25}
+                        strokeLinecap="round"/>
+                    </svg>
+                    <span className="db-conf-pct">{Math.round((topRec.confidence_score || 0.92) * 100)}%</span>
+                  </div>
+                  <span className="db-conf-label">Confidence</span>
+                </div>
+              </div>
+
+              <p className="db-rec-desc">{topRec.description}</p>
+
+              {/* Strategy metrics */}
+              {topRec.prediction && (
+                <div className="db-rec-stats">
+                  {[
+                    { icon: '💧', val: `${Math.round(topRec.prediction.water_saving_percent)}%`, label: 'Water Saving' },
+                    { icon: '🌾', val: `${parseFloat(topRec.prediction.expected_yield_ton_per_ha).toFixed(1)} t/ha`, label: 'Yield Forecast' },
+                    { icon: '🌍', val: `${topRec.prediction.net_gwp_reduction_percent > 0 ? '+' : ''}${Math.round(topRec.prediction.net_gwp_reduction_percent)}%`, label: 'Net GWP' },
+                  ].map(s => (
+                    <div key={s.label} className="db-rec-stat">
+                      <span>{s.icon}</span>
+                      <div className="db-rec-stat-val">{s.val}</div>
+                      <div className="db-rec-stat-lbl">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Timeline implementation text */}
+              {topRec.explanation?.how_to_implement && (
+                <div style={{ background: '#FAF8F3', padding: '1rem', borderRadius: '12px', border: '1px solid #E8E2D9', marginBottom: '1.5rem', fontSize: '0.85rem', color: '#555' }}>
+                  <strong style={{ display: 'block', color: '#161616', marginBottom: '0.25rem' }}>Implementation Guidance:</strong>
+                  {topRec.explanation.how_to_implement}
+                </div>
+              )}
+
+              <Link href="/recommendations" className="db-rec-link">
+                View recommendation history <ArrowRight size={14} />
+              </Link>
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '220px', textAlign: 'center', color: '#787878' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🤖</div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#161616', marginBottom: '0.5rem' }}>No Active Recommendation</h3>
+              <p style={{ fontSize: '0.85rem', maxWidth: '320px', margin: '0 auto 1.5rem', lineHeight: 1.6 }}>
+                {fields.length === 0 
+                  ? 'Please register your first field before running the AI Engine.' 
+                  : "Click 'Run AI Engine' on the Recommendations page to evaluate and compute your first watering strategy."}
+              </p>
+              {fields.length > 0 && (
+                <Link href="/recommendations" style={{ background: '#14532D', color: '#fff', padding: '0.6rem 1.2rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>
+                  Go to Recommendations
+                </Link>
+              )}
             </div>
-            <div className="db-confidence-badge">
-              <div className="db-conf-ring">
-                <svg viewBox="0 0 56 56" width="56" height="56">
-                  <circle cx="28" cy="28" r="23" fill="none" stroke="#E8E2D9" strokeWidth="3.5"/>
-                  <circle cx="28" cy="28" r="23" fill="none" stroke="#14532D" strokeWidth="3.5"
-                    strokeDasharray={`${2*Math.PI*23*0.92} ${2*Math.PI*23*0.08}`}
-                    strokeDashoffset={2*Math.PI*23*0.25}
-                    strokeLinecap="round"/>
-                </svg>
-                <span className="db-conf-pct">92%</span>
-              </div>
-              <span className="db-conf-label">Confidence</span>
-            </div>
-          </div>
-
-          <p className="db-rec-desc">
-            Based on soil moisture at {avgMoisture}%, no rain forecast for 3 days, and your fields being in 
-            the tillering stage — AGRIVO recommends Alternate Wetting &amp; Drying. Allow field to dry until 
-            15 cm below surface, then re-flood to 2–5 cm.
-          </p>
-
-          {/* Strategy metrics */}
-          <div className="db-rec-stats">
-            {[
-              { icon: '💧', val: '38%', label: 'Water Saving' },
-              { icon: '🌾', val: '5.8 t/ha', label: 'Yield Forecast' },
-              { icon: '🌍', val: '−24%', label: 'Net GWP' },
-            ].map(s => (
-              <div key={s.label} className="db-rec-stat">
-                <span>{s.icon}</span>
-                <div className="db-rec-stat-val">{s.val}</div>
-                <div className="db-rec-stat-lbl">{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Timeline */}
-          <div className="db-timeline">
-            {[
-              { day: 'Day 1–3', action: 'Let field dry naturally' },
-              { day: 'Day 4', action: 'Check water level (−15 cm)' },
-              { day: 'Day 5', action: 'Re-flood to 2–5 cm depth' },
-            ].map(t => (
-              <div key={t.day} className="db-timeline-item">
-                <div className="db-timeline-dot" />
-                <span className="db-timeline-day">{t.day}</span>
-                <span className="db-timeline-action">{t.action}</span>
-              </div>
-            ))}
-          </div>
-
-          <a href="/recommendations" className="db-rec-link">
-            View all recommendations <ArrowRight size={14} />
-          </a>
+          )}
         </div>
 
         {/* Weather panel */}
         <div className="db-weather-panel">
           <div className="db-panel-eyebrow">Weather Forecast</div>
-          <div className="db-weather-today">
-            <div>
-              <div className="db-weather-temp">{weather[0].temperature}°C</div>
-              <div className="db-weather-cond">{weather[0].condition.replace('-', ' ')}</div>
-            </div>
-            <div className="db-weather-emoji">{weatherIcon(weather[0].condition)}</div>
-          </div>
-          <div className="db-weather-details">
-            <div className="db-weather-detail">
-              <Droplets size={14} className="db-wd-icon" />
-              <span>Humidity</span>
-              <span className="db-wd-val">{weather[0].humidity}%</span>
-            </div>
-            <div className="db-weather-detail">
-              <Wind size={14} className="db-wd-icon" />
-              <span>Wind</span>
-              <span className="db-wd-val">{weather[0].windSpeed} km/h</span>
-            </div>
-            <div className="db-weather-detail">
-              <ThermometerSun size={14} className="db-wd-icon" />
-              <span>Rain</span>
-              <span className="db-wd-val">{weather[0].precipitation}mm</span>
-            </div>
-          </div>
-          <div className="db-weather-week-label">7-Day Outlook</div>
-          <div className="db-weather-week">
-            {weather.map((d, i) => (
-              <div key={i} className="db-weather-day">
-                <div className="db-weather-day-name">{i === 0 ? 'Today' : new Date(d.date).toLocaleDateString('en', {weekday:'short'})}</div>
-                <div className="db-weather-day-icon">{weatherIcon(d.condition)}</div>
-                <div className="db-weather-day-temp">{d.temperature}°</div>
+          {weather ? (
+            <>
+              <div className="db-weather-today">
+                <div>
+                  <div className="db-weather-temp">{Math.round(todayWeather.temperature_mean)}°C</div>
+                  <div className="db-weather-cond">{todayWeather.weather_condition.replace('-', ' ')}</div>
+                </div>
+                <div className="db-weather-emoji">{weatherIcon(todayWeather.weather_condition)}</div>
               </div>
-            ))}
-          </div>
+              <div className="db-weather-details">
+                <div className="db-weather-detail">
+                  <Droplets size={14} className="db-wd-icon" />
+                  <span>Humidity</span>
+                  <span className="db-wd-val">{Math.round(todayWeather.relative_humidity_mean)}%</span>
+                </div>
+                <div className="db-weather-detail">
+                  <Wind size={14} className="db-wd-icon" />
+                  <span>Wind Speed</span>
+                  <span className="db-wd-val">{Math.round(todayWeather.wind_speed_max)} km/h</span>
+                </div>
+                <div className="db-weather-detail">
+                  <ThermometerSun size={14} className="db-wd-icon" />
+                  <span>Precipitation</span>
+                  <span className="db-wd-val">{todayWeather.precipitation_sum} mm</span>
+                </div>
+              </div>
+              
+              {weather.forecast_list && weather.forecast_list.length > 0 && (
+                <>
+                  <div className="db-weather-week-label">7-Day Outlook</div>
+                  <div className="db-weather-week">
+                    {weather.forecast_list.slice(0, 7).map((d: any, i: number) => (
+                      <div key={i} className="db-weather-day">
+                        <div className="db-weather-day-name">
+                          {i === 0 ? 'Today' : new Date(d.date).toLocaleDateString('en', { weekday: 'short' })}
+                        </div>
+                        <div className="db-weather-day-icon">{weatherIcon(d.weather_condition)}</div>
+                        <div className="db-weather-day-temp">{Math.round(d.temperature_mean)}°</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '220px', textAlign: 'center', color: '#787878' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⛅</div>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#161616', marginBottom: '0.25rem' }}>No Weather Data</h3>
+              <p style={{ fontSize: '0.8rem', maxWidth: '240px', margin: '0 auto', lineHeight: 1.5 }}>
+                Weather forecast will load automatically once a field is created.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -179,7 +233,7 @@ export function DashboardContent({ fields, weather, recommendations }: Dashboard
             <a href="/recommendations" className="db-see-all">See all →</a>
           </div>
           <div className="db-alerts-list">
-            {recommendations.map(rec => {
+            {recommendations.slice(0, 3).map(rec => {
               const uc = urgencyColor(rec.urgency);
               return (
                 <div key={rec.id} className="db-alert-item" style={{ background: uc.bg, borderColor: uc.border }}>
@@ -204,37 +258,51 @@ export function DashboardContent({ fields, weather, recommendations }: Dashboard
       <div className="db-section">
         <div className="db-section-header">
           <h3 className="db-section-title">Your Fields</h3>
-          <a href="/field-analysis" className="db-see-all">View analysis →</a>
+          <Link href="/field-analysis" className="db-see-all">View analysis →</Link>
         </div>
-        <div className="db-fields-grid">
-          {fields.map(field => (
-            <div key={field.id} className="db-field-card">
-              <div className="db-field-img-wrap">
-                <Image src="/rice-field-editorial.png" alt={field.name} fill className="db-field-img" />
-                <div className="db-field-img-overlay" />
-                <div className="db-field-crop-badge">{field.crop}</div>
-              </div>
-              <div className="db-field-body">
-                <div className="db-field-name">{field.name}</div>
-                <div className="db-field-meta">{field.area} ha · {field.location}</div>
-                <div className="db-field-metrics">
-                  <div className="db-field-metric">
-                    <span className="db-fm-label">Moisture</span>
-                    <div className="db-fm-bar-wrap">
-                      <div className="db-fm-bar" style={{ width: `${field.moisture}%`, background: field.moisture < 60 ? '#C0392B' : '#14532D' }} />
+
+        {fields.length > 0 ? (
+          <div className="db-fields-grid">
+            {fields.map(field => (
+              <div key={field.id} className="db-field-card">
+                <div className="db-field-img-wrap">
+                  <Image src="/rice-field-editorial.png" alt={field.name} fill className="db-field-img" />
+                  <div className="db-field-img-overlay" />
+                  <div className="db-field-crop-badge">{field.crop}</div>
+                </div>
+                <div className="db-field-body">
+                  <div className="db-field-name">{field.name}</div>
+                  <div className="db-field-meta">{field.area} ha · Coordinate: {field.location}</div>
+                  <div className="db-field-metrics">
+                    <div className="db-field-metric">
+                      <span className="db-fm-label">Moisture</span>
+                      <div className="db-fm-bar-wrap">
+                        <div className="db-fm-bar" style={{ width: `${field.moisture}%`, background: field.moisture < 60 ? '#C0392B' : '#14532D' }} />
+                      </div>
+                      <span className="db-fm-val">{field.moisture}%</span>
                     </div>
-                    <span className="db-fm-val">{field.moisture}%</span>
-                  </div>
-                  <div className="db-field-metrics-row">
-                    <div className="db-fm-pill">pH {field.ph}</div>
-                    <div className="db-fm-pill">{field.temperature}°C</div>
-                    <div className="db-fm-pill">N:{field.nitrogen}</div>
+                    <div className="db-field-metrics-row">
+                      <div className="db-fm-pill">pH {field.ph}</div>
+                      <div className="db-fm-pill">{field.temperature}°C</div>
+                      <div className="db-fm-pill">N:{field.nitrogen}</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ background: '#fff', border: '1px solid #E8E2D9', borderRadius: '20px', padding: '3rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🌾</div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#161616', marginBottom: '0.5rem' }}>No Registered Fields</h3>
+            <p style={{ fontSize: '0.85rem', color: '#787878', maxWidth: '360px', margin: '0 auto 1.5rem', lineHeight: 1.6 }}>
+              Add your first agricultural field with location and rice variety to start monitoring water, weather, and AI recommendations.
+            </p>
+            <Link href="/field-analysis" style={{ background: '#14532D', color: '#fff', padding: '0.75rem 1.5rem', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 700, textDecoration: 'none' }}>
+              Add Your First Field
+            </Link>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -274,7 +342,7 @@ export function DashboardContent({ fields, weather, recommendations }: Dashboard
         /* Rec Panel */
         .db-rec-panel {
           background: #fff; border: 1px solid #E8E2D9; border-radius: 24px; padding: 2rem;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+          box-shadow: 0 4px 16px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between;
         }
         .db-rec-panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
         .db-panel-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #14532D; margin-bottom: .4rem; }
@@ -288,15 +356,10 @@ export function DashboardContent({ fields, weather, recommendations }: Dashboard
         .db-rec-stat { background: #FAF8F3; border: 1px solid #E8E2D9; border-radius: 14px; padding: 1rem; text-align: center; font-size: .9rem; display: flex; flex-direction: column; gap: .3rem; }
         .db-rec-stat-val { font-size: 1.4rem; font-weight: 800; color: #161616; }
         .db-rec-stat-lbl { font-size: .7rem; color: #787878; }
-        .db-timeline { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.5rem; }
-        .db-timeline-item { display: grid; grid-template-columns: 10px 80px 1fr; gap: .75rem; align-items: center; font-size: .8rem; }
-        .db-timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: #14532D; }
-        .db-timeline-day { color: #14532D; font-weight: 700; }
-        .db-timeline-action { color: #787878; }
-        .db-rec-link { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 600; color: #14532D; text-decoration: none; border-bottom: 1px solid #14532D; padding-bottom: .1rem; }
+        .db-rec-link { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 600; color: #14532D; text-decoration: none; border-bottom: 1px solid #14532D; padding-bottom: .1rem; width: fit-content; }
 
         /* Weather Panel */
-        .db-weather-panel { background: #fff; border: 1px solid #E8E2D9; border-radius: 24px; padding: 1.75rem; }
+        .db-weather-panel { background: #fff; border: 1px solid #E8E2D9; border-radius: 24px; padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between; }
         .db-weather-today { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
         .db-weather-temp { font-size: 3rem; font-weight: 900; letter-spacing: -.04em; color: #161616; line-height: 1; }
         .db-weather-cond { font-size: .85rem; color: #787878; margin-top: .25rem; text-transform: capitalize; }

@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { BarChart3, Cloud, User, Lightbulb, Leaf, ChevronRight, ArrowLeft, Sparkles } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { BarChart3, Cloud, User, Lightbulb, Leaf, ChevronRight, ArrowLeft, Sparkles, LogOut } from 'lucide-react';
 import { useState } from 'react';
+import { clearAuthToken } from '@/lib/api-client';
 
 const routes = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3, sub: 'Overview & metrics' },
@@ -16,7 +17,13 @@ const routes = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleLogout = () => {
+    clearAuthToken();
+    window.location.replace('/login');
+  };
 
   return (
     <aside className={`ag-sidebar${collapsed ? ' collapsed' : ''}`}>
@@ -55,12 +62,16 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom: back to landing */}
-      <div className="ag-sidebar-bottom">
+      {/* Bottom: back to landing & logout */}
+      <div className="ag-sidebar-bottom" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
         <Link href="/landing" className="ag-sidebar-landing-link" title={collapsed ? 'Back to site' : undefined}>
           <ArrowLeft size={16} />
           {!collapsed && <span>Back to site</span>}
         </Link>
+        <button onClick={handleLogout} className="ag-sidebar-logout-link" title={collapsed ? 'Sign Out' : undefined}>
+          <LogOut size={16} />
+          {!collapsed && <span>Sign Out</span>}
+        </button>
       </div>
 
       <style>{`
@@ -151,6 +162,15 @@ export function Sidebar() {
           transition: color .2s, background .2s; white-space: nowrap;
         }
         .ag-sidebar-landing-link:hover { color: #14532D; background: #FAF8F3; }
+        .ag-sidebar-logout-link {
+          display: flex; align-items: center; gap: .6rem;
+          font-size: .8rem; font-weight: 500; color: #C0392B;
+          text-decoration: none; padding: .5rem .75rem; border-radius: 8px;
+          transition: color .2s, background .2s; white-space: nowrap;
+          border: none; background: none; cursor: pointer; width: 100%;
+          text-align: left; font-family: inherit;
+        }
+        .ag-sidebar-logout-link:hover { color: #A93226; background: #fdf2f0; }
       `}</style>
     </aside>
   );

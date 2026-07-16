@@ -1,17 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, MapPin, Droplets, CloudRain, CheckCircle, ArrowRight } from 'lucide-react';
-import { mockFields } from '@/lib/mock-data';
+import { apiClient } from '@/lib/api-client';
 
 export function Predictor() {
-  const [fieldId, setFieldId] = useState(mockFields[0]?.id || '');
+  const [fields, setFields] = useState<any[]>([]);
+  const [fieldId, setFieldId] = useState('');
   const [soilMoisture, setSoilMoisture] = useState(65);
   const [rainfall, setRainfall] = useState(0);
   const [stage, setStage] = useState('tillering');
   
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchFields() {
+      try {
+        const res = await apiClient<{ data: any }>('/fields');
+        const items = res.data.items || res.data;
+        setFields(items);
+        if (items.length > 0) {
+          setFieldId(items[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load fields for predictor', err);
+      }
+    }
+    fetchFields();
+  }, []);
 
   const handlePredict = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +69,8 @@ export function Predictor() {
               <div className="prd-input-wrap">
                 <MapPin size={18} />
                 <select value={fieldId} onChange={e => setFieldId(e.target.value)} required>
-                  {mockFields.map(f => (
-                    <option key={f.id} value={f.id}>{f.name} ({f.area} ha)</option>
+                  {fields.map(f => (
+                    <option key={f.id} value={f.id}>{f.name} ({f.field_area_ha || 0} ha)</option>
                   ))}
                 </select>
               </div>

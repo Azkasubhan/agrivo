@@ -56,7 +56,7 @@ export async function apiClient<T>(
       clearAuthToken();
       // Handle unauthorized (e.g., redirect to login)
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     }
     const errorData = await response.json().catch(() => ({}));

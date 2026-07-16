@@ -4,17 +4,36 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 
-/* ── tiny hook: in-view for fade-in animations ── */
+/* ── tiny hook: in-view for fade-in animations with mount fallback ── */
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold });
+    
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+        }
+      },
+      { threshold }
+    );
     obs.observe(el);
-    return () => obs.disconnect();
+
+    // Fallback: force visibility after 600ms in case observer fails to trigger due to scroll-restoration
+    const fallback = setTimeout(() => {
+      setVisible(true);
+    }, 600);
+
+    return () => {
+      obs.disconnect();
+      clearTimeout(fallback);
+    };
   }, [threshold]);
+
   return { ref, visible };
 }
 

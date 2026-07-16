@@ -1,18 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiClient, setAuthToken } from '@/lib/api-client';
+import { apiClient, setAuthToken, getAuthToken } from '@/lib/api-client';
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
-  const [phone, setPhone] = useState('+6281234567890');
-  const [password, setPassword] = useState('password123');
-  const [fullName, setFullName] = useState('Pak Farmer');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -29,7 +28,7 @@ export default function LoginPage() {
           }),
         });
         setAuthToken(res.data.access_token);
-        router.push('/dashboard');
+        window.location.replace('/dashboard');
       } else {
         await apiClient('/auth/register', {
           method: 'POST',
@@ -50,7 +49,7 @@ export default function LoginPage() {
           }),
         });
         setAuthToken(res.data.access_token);
-        router.push('/dashboard');
+        window.location.replace('/dashboard');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');

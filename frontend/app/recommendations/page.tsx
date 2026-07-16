@@ -269,7 +269,7 @@ export default function RecommendationsPage() {
                           <h4 className="rp-rec-title">{rec.recommended_strategy_display}</h4>
                           <p className="rp-rec-desc">{rec.description}</p>
                           <div className="rp-rec-metrics">
-                            {rec.metrics.map(m => <span key={m} className="rp-rec-metric-tag">{m}</span>)}
+                            {rec.metrics.map((m: string) => <span key={m} className="rp-rec-metric-tag">{m}</span>)}
                           </div>
                         </div>
                         <div className="rp-rec-right">
