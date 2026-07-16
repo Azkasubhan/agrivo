@@ -22,19 +22,57 @@ export function Header() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [userInitials, setUserInitials] = useState('FH');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const settingsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Settings states matching DB fields
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [recAlertEnabled, setRecAlertEnabled] = useState(true);
+  const [weatherAlertEnabled, setWeatherAlertEnabled] = useState(true);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
 
   const fetchUserData = async () => {
     try {
       const res = (await apiClient('/users/me')) as any;
-      if (res.success && res.data?.full_name) {
-        const names = res.data.full_name.trim().split(/\s+/);
-        const initials = names.slice(0, 2).map((n: string) => n[0].toUpperCase()).join('');
-        setUserInitials(initials || 'FH');
+      if (res.success && res.data) {
+        if (res.data.full_name) {
+          const names = res.data.full_name.trim().split(/\s+/);
+          const initials = names.slice(0, 2).map((n: string) => n[0].toUpperCase()).join('');
+          setUserInitials(initials || 'FH');
+        }
+        if (res.data.notification_preference) {
+          setWhatsappEnabled(res.data.notification_preference.whatsapp_enabled);
+          setRecAlertEnabled(res.data.notification_preference.recommendation_change_alert);
+          setWeatherAlertEnabled(res.data.notification_preference.weather_risk_alert);
+        }
       }
     } catch (err) {
       console.error('Error fetching user for header avatar:', err);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setSavingSettings(true);
+    setSettingsMessage(null);
+    try {
+      await apiClient('/users/me/notifications', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          whatsapp_enabled: whatsappEnabled,
+          recommendation_change_alert: recAlertEnabled,
+          weather_risk_alert: weatherAlertEnabled,
+        }),
+      });
+      setSettingsMessage('Settings saved successfully!');
+      setTimeout(() => setSettingsMessage(null), 3000);
+    } catch (err) {
+      console.error('Failed to update notification preferences', err);
+      setSettingsMessage('Failed to save settings.');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -84,6 +122,9 @@ export function Header() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
+      if (settingsDropdownRef.current && !settingsDropdownRef.current.contains(event.target as Node)) {
+        setShowSettingsDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
 
@@ -117,17 +158,17 @@ export function Header() {
           {showDropdown && (
             <div className="ag-notif-dropdown">
               <div className="ag-notif-header">
-                <span className="ag-notif-title">Notifikasi ({unreadCount})</span>
+                <span className="ag-notif-title">Notifications ({unreadCount})</span>
                 {unreadCount > 0 && (
                   <button className="ag-notif-clear-btn" onClick={markAllAsRead}>
-                    Tandai semua terbaca
+                    Mark all as read
                   </button>
                 )}
               </div>
 
               <div className="ag-notif-list">
                 {notifications.length === 0 ? (
-                  <div className="ag-notif-empty">Tidak ada notifikasi baru.</div>
+                  <div className="ag-notif-empty">No new notifications.</div>
                 ) : (
                   notifications.map((notif) => (
                     <div
@@ -139,7 +180,7 @@ export function Header() {
                       <div className="ag-notif-content">
                         <p className="ag-notif-msg">{notif.message}</p>
                         <span className="ag-notif-time">
-                          {new Date(notif.created_at).toLocaleDateString('id-ID', {
+                          {new Date(notif.created_at).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'short',
                             hour: '2-digit',
@@ -148,7 +189,7 @@ export function Header() {
                         </span>
                       </div>
                       {!notif.is_read && (
-                        <button className="ag-notif-action-btn" title="Tandai terbaca">
+                        <button className="ag-notif-action-btn" title="Mark as read">
                           <Check size={14} />
                         </button>
                       )}
@@ -160,9 +201,66 @@ export function Header() {
           )}
         </div>
 
-        <Link href="/profile" className="ag-header-icon-btn" aria-label="Settings">
-          <Settings size={18} />
-        </Link>
+        <div style={{ position: 'relative' }} ref={settingsDropdownRef}>
+          <button
+            className={`ag-header-icon-btn ${showSettingsDropdown ? 'active' : ''}`}
+            aria-label="Settings"
+            onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+          >
+            <Settings size={18} />
+          </button>
+
+          {showSettingsDropdown && (
+            <div className="ag-settings-dropdown">
+              <div className="ag-settings-header">
+                <span className="ag-settings-title">Alert & Notification Settings</span>
+              </div>
+              <div className="ag-settings-body">
+                <p className="ag-settings-sub">Receive daily irrigation recommendations and weather risks directly on your device.</p>
+                <div className="ag-settings-checkboxes">
+                  <label className="ag-settings-label">
+                    <input
+                      type="checkbox"
+                      checked={whatsappEnabled}
+                      onChange={(e) => setWhatsappEnabled(e.target.checked)}
+                    />
+                    Enable WhatsApp Alerts
+                  </label>
+                  <label className="ag-settings-label">
+                    <input
+                      type="checkbox"
+                      checked={recAlertEnabled}
+                      onChange={(e) => setRecAlertEnabled(e.target.checked)}
+                    />
+                    Alert on Recommendation Changes
+                  </label>
+                  <label className="ag-settings-label">
+                    <input
+                      type="checkbox"
+                      checked={weatherAlertEnabled}
+                      onChange={(e) => setWeatherAlertEnabled(e.target.checked)}
+                    />
+                    Alert on Extreme Weather Risks
+                  </label>
+                </div>
+
+                <button
+                  onClick={handleSaveNotifications}
+                  disabled={savingSettings}
+                  className="ag-settings-save-btn"
+                >
+                  {savingSettings ? 'Saving...' : 'Save Preferences'}
+                </button>
+
+                {settingsMessage && (
+                  <div className={`ag-settings-msg ${settingsMessage.includes('Failed') ? 'error' : 'success'}`}>
+                    {settingsMessage}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="ag-header-divider" />
         <Link href="/profile" className="ag-header-avatar" aria-label="Profile">
           <span>{userInitials}</span>
@@ -297,6 +395,58 @@ export function Header() {
         }
         .ag-notif-item:hover .ag-notif-action-btn { opacity: 1; }
         .ag-notif-action-btn:hover { background: #FAF8F3; color: #14532D; }
+
+        /* Settings Dropdown styles */
+        .ag-settings-dropdown {
+          position: absolute; top: 45px; right: 0;
+          width: 320px;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          border: 1px solid #E8E2D9;
+          border-radius: 14px;
+          box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
+          z-index: 1000;
+          display: flex; flex-direction: column;
+          overflow: hidden;
+        }
+        .ag-settings-header {
+          padding: 1rem 1.25rem; border-bottom: 1px solid #E8E2D9;
+          background: #FAF8F3;
+        }
+        .ag-settings-title { font-size: .85rem; font-weight: 600; color: #161616; }
+        .ag-settings-body {
+          padding: 1.25rem;
+          display: flex; flex-direction: column; gap: 1rem;
+        }
+        .ag-settings-sub {
+          font-size: .75rem; color: #787878; line-height: 1.5; margin: 0;
+        }
+        .ag-settings-checkboxes {
+          display: flex; flex-direction: column; gap: .75rem;
+        }
+        .ag-settings-label {
+          display: flex; align-items: center; gap: .6rem;
+          font-size: .8rem; color: #161616; cursor: pointer;
+          user-select: none;
+        }
+        .ag-settings-label input {
+          width: 15px; height: 15px; accent-color: #14532D; cursor: pointer;
+        }
+        .ag-settings-save-btn {
+          width: 100%; padding: .6rem;
+          background: #14532D; color: #fff;
+          border: none; border-radius: 8px;
+          font-size: .8rem; font-weight: 700;
+          cursor: pointer; transition: background .2s;
+        }
+        .ag-settings-save-btn:hover { background: #114022; }
+        .ag-settings-save-btn:disabled { background: #a09589; cursor: not-allowed; }
+        .ag-settings-msg {
+          font-size: .75rem; font-weight: 600; text-align: center;
+          margin-top: 0.25rem;
+        }
+        .ag-settings-msg.success { color: #14532D; }
+        .ag-settings-msg.error { color: #DC2626; }
       `}</style>
     </header>
   );

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { apiClient, setAuthToken, getAuthToken } from '@/lib/api-client';
 
 export default function LoginPage() {
@@ -17,13 +19,31 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    // Format dan validasi nomor telepon (Format seluler Indonesia)
+    let formattedPhone = phone.trim().replace(/\D/g, '');
+    
+    // Normalisasi: Hapus angka 0 atau 62 di depan jika disalin-tempel
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = formattedPhone.substring(1);
+    } else if (formattedPhone.startsWith('62')) {
+      formattedPhone = formattedPhone.substring(2);
+    }
+
+    if (!/^[8]\d{7,12}$/.test(formattedPhone)) {
+      setError('Nomor telepon tidak valid. Masukkan nomor tanpa angka 0 di depan (contoh: 8123456789)');
+      setLoading(false);
+      return;
+    }
+
+    const fullPhoneNumber = `+62${formattedPhone}`;
+
     try {
       if (isLogin) {
         const res = await apiClient<{ data: { access_token: string } }>('/auth/login', {
           method: 'POST',
           requireAuth: false,
           body: JSON.stringify({
-            phone_number: phone,
+            phone_number: fullPhoneNumber,
             password: password,
           }),
         });
@@ -35,7 +55,7 @@ export default function LoginPage() {
           requireAuth: false,
           body: JSON.stringify({
             full_name: fullName,
-            phone_number: phone,
+            phone_number: fullPhoneNumber,
             password: password,
           }),
         });
@@ -44,7 +64,7 @@ export default function LoginPage() {
           method: 'POST',
           requireAuth: false,
           body: JSON.stringify({
-            phone_number: phone,
+            phone_number: fullPhoneNumber,
             password: password,
           }),
         });
@@ -61,6 +81,18 @@ export default function LoginPage() {
   return (
     <div className="login-root">
       <div className="login-card">
+        <div className="login-logo-container">
+          <Link href="/landing">
+            <Image
+              src="/logofix.PNG"
+              alt="AGRIVO Logo"
+              width={120}
+              height={45}
+              className="login-logo-img"
+              priority
+            />
+          </Link>
+        </div>
         <h1>{isLogin ? 'Welcome Back' : 'Create Account'}</h1>
         <p className="login-subtitle">
           {isLogin
@@ -84,13 +116,22 @@ export default function LoginPage() {
           )}
           <div className="form-group">
             <label>Phone Number</label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+62..."
-              required
-            />
+            <div className="phone-input-container">
+              <span className="phone-prefix">+62</span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/\D/g, '');
+                  const maxAllowed = val.startsWith('0') ? 14 : val.startsWith('62') ? 15 : 13;
+                  if (val.length > maxAllowed) {
+                    val = val.substring(0, maxAllowed);
+                  }
+                  setPhone(val);
+                }}
+                required
+              />
+            </div>
           </div>
           <div className="form-group">
             <label>Password</label>
@@ -132,6 +173,48 @@ export default function LoginPage() {
           width: 100%;
           max-width: 400px;
           border: 1px solid #E8E2D9;
+        }
+        .phone-input-container {
+          display: flex;
+          align-items: center;
+          border: 1px solid #E8E2D9;
+          border-radius: 12px;
+          overflow: hidden;
+          background: #fff;
+          transition: border-color 0.2s;
+        }
+        .phone-input-container:focus-within {
+          border-color: #14532D;
+        }
+        .phone-prefix {
+          padding: 0.75rem 0.5rem 0.75rem 1rem;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #787878;
+          background: #FAF8F3;
+          border-right: 1px solid #E8E2D9;
+          user-select: none;
+        }
+        .phone-input-container input {
+          flex: 1;
+          padding: 0.75rem 1rem;
+          border: none !important;
+          border-radius: 0 !important;
+          font-size: 1rem;
+          background: transparent;
+          box-sizing: border-box;
+        }
+        .phone-input-container input:focus {
+          outline: none !important;
+        }
+        .login-logo-container {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 1.5rem;
+        }
+        .login-logo-img {
+          object-fit: contain;
+          cursor: pointer;
         }
         h1 {
           margin: 0 0 0.5rem;

@@ -44,7 +44,7 @@ export default function RecommendationsPage() {
         }
       } catch (err) {
         console.error('Failed to load fields', err);
-        setError('Gagal memuat data lahan.');
+        setError('Failed to load field data.');
       } finally {
         setLoadingFields(false);
       }
@@ -61,7 +61,7 @@ export default function RecommendationsPage() {
       setRecommendations(res.data.items);
     } catch (err) {
       console.error('Failed to load recommendations', err);
-      setError('Gagal memuat rekomendasi.');
+      setError('Failed to load recommendations.');
     } finally {
       setLoadingRecs(false);
     }
@@ -83,7 +83,7 @@ export default function RecommendationsPage() {
       await fetchRecommendations(selectedFieldId);
     } catch (err: any) {
       console.error('Failed to generate recommendation', err);
-      setError(err.message || 'Gagal menjalankan engine rekomendasi AI.');
+      setError(err.message || 'Failed to run AI recommendation engine.');
     } finally {
       setGenerating(false);
     }
@@ -115,7 +115,7 @@ export default function RecommendationsPage() {
           {fields.length > 0 && (
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: '#a09589' }}>
-                Lahan:
+                Field:
               </span>
               <select
                 value={selectedFieldId}
@@ -151,7 +151,7 @@ export default function RecommendationsPage() {
                   Agrivo Hybrid AI Engine
                 </h3>
                 <p style={{ fontSize: '0.85rem', opacity: 0.9, marginTop: '0.25rem', margin: 0 }}>
-                  Hitung rekomendasi AWD presisi menggunakan XGBoost + Rule Engine.
+                  Calculate precision irrigation recommendations using XGBoost + Rule Engine.
                 </p>
               </div>
               <button
@@ -175,12 +175,12 @@ export default function RecommendationsPage() {
                 {generating ? (
                   <>
                     <Loader size={16} className="animate-spin" />
-                    Menghitung...
+                    Calculating...
                   </>
                 ) : (
                   <>
                     <Zap size={16} />
-                    Jalankan AI Engine
+                    Run AI Engine
                   </>
                 )}
               </button>

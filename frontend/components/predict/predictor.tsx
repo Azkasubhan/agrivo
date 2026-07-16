@@ -55,7 +55,7 @@ export function Predictor() {
       <div className="prd-header">
         <p className="prd-eyebrow">Agrivo Engine</p>
         <h1 className="prd-title">AI Irrigation Predictor</h1>
-        <p className="prd-desc">Simulate and generate optimal AWD irrigation strategies based on real-time field data.</p>
+        <p className="prd-desc">Simulate and generate optimal irrigation strategies based on real-time field data.</p>
       </div>
 
       <div className="prd-content">

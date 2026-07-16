@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
+import { getAuthToken } from '@/lib/api-client';
 
 /* ── tiny hook: in-view for fade-in animations with mount fallback ── */
 function useInView(threshold = 0.15) {
@@ -12,6 +13,13 @@ function useInView(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    
+    // Pengecekan instan jika elemen sudah ada di viewport (misal: scroll restoration dari tombol back)
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom >= 0) {
+      setVisible(true);
+      return;
+    }
     
     const obs = new IntersectionObserver(
       ([entry]) => {
@@ -24,7 +32,7 @@ function useInView(threshold = 0.15) {
     );
     obs.observe(el);
 
-    // Fallback: force visibility after 600ms in case observer fails to trigger due to scroll-restoration
+    // Fallback: force visibility setelah 600ms sebagai pengaman tambahan
     const fallback = setTimeout(() => {
       setVisible(true);
     }, 600);
@@ -55,6 +63,14 @@ const EDU_ARTICLES = [
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  useEffect(() => {
+    setIsLoggedIn(!!getAuthToken());
+  }, []);
+
+  const targetLink = isLoggedIn ? '/dashboard' : '/login';
+
   const about = useInView();
   const features = useInView(0.05);
   const rec = useInView();
@@ -83,9 +99,9 @@ export default function LandingPage() {
       {/* ── NAV ──────────────────────────────────────────────── */}
       <header className={`ag-nav${scrolled ? ' scrolled' : ''}`}>
         <div className="ag-nav-inner">
-          <Link href="/landing" className="ag-logo">
+          <a href="/landing" className="ag-logo">
             <Image src="/logofix.PNG" alt="AGRIVO" width={110} height={40} className="ag-logo-img" priority />
-          </Link>
+          </a>
 
           <nav className="ag-nav-links">
             <a href="#about">About</a>
@@ -95,8 +111,8 @@ export default function LandingPage() {
           </nav>
 
           <div className="ag-nav-actions">
-            <Link href="/dashboard" className="ag-btn-ghost">Sign in</Link>
-            <Link href="/dashboard" className="ag-btn-pill">Get Started →</Link>
+            <Link href={targetLink} className="ag-btn-ghost">Sign in</Link>
+            <Link href={targetLink} className="ag-btn-pill">Get Started →</Link>
           </div>
 
           <button className="ag-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
@@ -108,7 +124,7 @@ export default function LandingPage() {
             {['About', 'Features', 'AI Engine', 'Learn'].map(l => (
               <a key={l} href={`#${l.toLowerCase().replace(' ', '')}`} onClick={() => setMenuOpen(false)}>{l}</a>
             ))}
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="ag-btn-pill" style={{ alignSelf: 'flex-start' }}>Open Dashboard →</Link>
+            <Link href={targetLink} onClick={() => setMenuOpen(false)} className="ag-btn-pill" style={{ alignSelf: 'flex-start' }}>Open Dashboard →</Link>
           </div>
         )}
       </header>
@@ -146,7 +162,7 @@ export default function LandingPage() {
             AGRIVO helps rice farmers choose the optimal irrigation strategy based on real-time weather data, soil conditions, and crop growth stage — reducing water use and greenhouse gas emissions.
           </p>
           <div className="ag-hero-ctas">
-            <Link href="/dashboard" className="ag-cta-primary">Get Recommendation →</Link>
+            <Link href={targetLink} className="ag-cta-primary">Get Recommendation →</Link>
             <a href="#features" className="ag-cta-secondary">Explore Platform</a>
           </div>
         </div>
@@ -198,7 +214,7 @@ export default function LandingPage() {
               We believe the future of sustainable rice farming is data-informed decisions made by
               empowered farmers—not autonomous machines.
             </p>
-            <Link href="/dashboard" className="ag-link-arrow">Explore the platform →</Link>
+            <Link href={targetLink} className="ag-link-arrow">Explore the platform →</Link>
           </div>
           <div className="ag-about-img-wrap">
             <div className="ag-about-img-frame">
@@ -227,7 +243,7 @@ export default function LandingPage() {
                   <div className="ag-feature-icon">{f.icon}</div>
                   <h3 className="ag-feature-h3">{f.title}</h3>
                   <p className="ag-body-text">{f.desc}</p>
-                  <Link href="/dashboard" className="ag-link-arrow">Learn more →</Link>
+                  <Link href={targetLink} className="ag-link-arrow">Learn more →</Link>
                 </div>
                 <div className="ag-feature-img-wrap">
                   <Image src={f.img} alt={f.title} fill className="ag-rounded-img" />
@@ -242,7 +258,7 @@ export default function LandingPage() {
                   <div className="ag-feature-icon">{f.icon}</div>
                   <h3 className="ag-feature-h3">{f.title}</h3>
                   <p className="ag-body-text">{f.desc}</p>
-                  <Link href="/dashboard" className="ag-link-arrow">Learn more →</Link>
+                  <Link href={targetLink} className="ag-link-arrow">Learn more →</Link>
                 </div>
               </>
             )}
@@ -429,7 +445,7 @@ export default function LandingPage() {
                 Partnered with the International Rice Research Institute (IRRI) and calibrated
                 against 8 years of field trial data across Java, Sumatra, and Sulawesi.
               </p>
-              <Link href="/dashboard" className="ag-btn-light" style={{ marginTop: '2rem', display: 'inline-flex', border: '1px solid #ccc' }}>View Full Impact Report →</Link>
+              <Link href={targetLink} className="ag-btn-light" style={{ marginTop: '2rem', display: 'inline-flex', border: '1px solid #ccc' }}>View Full Impact Report →</Link>
             </div>
           </div>
         </div>
@@ -508,7 +524,7 @@ export default function LandingPage() {
         </div>
         <div className="ag-footer-bottom">
           <span>© 2025 AGRIVO. All rights reserved.</span>
-          <Link href="/dashboard" className="ag-footer-cta">Open Platform →</Link>
+          <Link href={targetLink} className="ag-footer-cta">Open Platform →</Link>
         </div>
       </footer>
 

@@ -8,13 +8,13 @@ export function ProfileContent() {
   const [profile, setProfile] = useState<any>(null);
   const [fields, setFields] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  // Notifications state matching DB fields
-  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
-  const [recAlertEnabled, setRecAlertEnabled] = useState(true);
-  const [weatherAlertEnabled, setWeatherAlertEnabled] = useState(true);
+  const [impactStats, setImpactStats] = useState({
+    waterSavedL: 0,
+    co2AvoidedKg: 0,
+    bestYield: 0,
+    totalRecommendations: 0,
+    hasData: false
+  });
 
   useEffect(() => {
     async function loadData() {
@@ -27,14 +27,56 @@ export function ProfileContent() {
         const uData = profileRes.data;
         setProfile(uData);
 
-        const items = (fieldsRes.data as any).items || fieldsRes.data;
+        const items = (fieldsRes.data as any).items || fieldsRes.data || [];
         setFields(items);
 
-        // Prepopulate notifications
-        if (uData.notification_preference) {
-          setWhatsappEnabled(uData.notification_preference.whatsapp_enabled);
-          setRecAlertEnabled(uData.notification_preference.recommendation_change_alert);
-          setWeatherAlertEnabled(uData.notification_preference.weather_risk_alert);
+        // Fetch recommendations for all fields to compute impact stats
+        if (items.length > 0) {
+          let totalWaterSavedL = 0;
+          let totalCo2AvoidedKg = 0;
+          let maxYield = 0;
+          let totalRecsCount = 0;
+
+          await Promise.all(
+            items.map(async (field: any) => {
+              try {
+                const recsRes = await apiClient<{ data: any[] | { items: any[] } }>(`/fields/${field.id}/recommendations`);
+                const recs = (recsRes.data as any).items || recsRes.data || [];
+                totalRecsCount += recs.length;
+
+                recs.forEach((rec: any) => {
+                  if (rec.prediction) {
+                    const area = parseFloat(field.field_area_ha || 0);
+                    // 1 hectare uses ~100,000 Liters of irrigation water per day
+                    const waterSavingPct = parseFloat(rec.prediction.water_saving_percent || 0);
+                    const waterSaved = area * 100000 * (waterSavingPct / 100);
+                    totalWaterSavedL += waterSaved;
+
+                    // Net GWP reduction percent
+                    const gwpPct = parseFloat(rec.prediction.net_gwp_reduction_percent || 0);
+                    // Standard daily GWP emission per ha is ~25 kg CO2-eq
+                    const co2Avoided = area * 25 * (gwpPct / 100);
+                    totalCo2AvoidedKg += co2Avoided;
+
+                    const expectedYield = parseFloat(rec.prediction.expected_yield_ton_per_ha || 0);
+                    if (expectedYield > maxYield) {
+                      maxYield = expectedYield;
+                    }
+                  }
+                });
+              } catch (err) {
+                console.error(`Failed to load recommendations for field ${field.id}`, err);
+              }
+            })
+          );
+
+          setImpactStats({
+            waterSavedL: Math.round(totalWaterSavedL),
+            co2AvoidedKg: Math.round(totalCo2AvoidedKg),
+            bestYield: maxYield,
+            totalRecommendations: totalRecsCount,
+            hasData: totalRecsCount > 0
+          });
         }
       } catch (err) {
         console.error('Failed to load profile or fields', err);
@@ -44,27 +86,6 @@ export function ProfileContent() {
     }
     loadData();
   }, []);
-
-  const handleSaveNotifications = async () => {
-    setUpdating(true);
-    setMessage(null);
-    try {
-      await apiClient('/users/me/notifications', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          whatsapp_enabled: whatsappEnabled,
-          recommendation_change_alert: recAlertEnabled,
-          weather_risk_alert: weatherAlertEnabled,
-        }),
-      });
-      setMessage('Notification preferences updated successfully!');
-    } catch (err) {
-      console.error('Failed to update notification preferences', err);
-      setMessage('Failed to update preferences.');
-    } finally {
-      setUpdating(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -89,122 +110,48 @@ export function ProfileContent() {
           <div className="pc-avatar">{initials}</div>
           <div>
             <h1 className="pc-hero-name">{profile?.full_name || 'Agrivo Farmer'}</h1>
-            <p className="pc-hero-loc">📍 {profile?.subdistrict || 'Klaten'}, {profile?.province || 'Jawa Tengah'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <p className="pc-hero-phone">📞 {profile?.phone_number || '-'}</p>
+              {fields.length > 0 && fields[0].subdistrict && fields[0].province && (
+                <p className="pc-hero-loc">📍 {fields[0].subdistrict}, {fields[0].province}</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="pc-body">
         {/* Farm overview */}
-        <div className="pc-left">
-          <div className="pc-card">
-            <div className="pc-card-title">Farm Overview</div>
-            <div className="pc-info-rows">
-              {[
-                { label: 'Total Area', val: `${totalArea} ha` },
-                { label: 'Active Fields', val: fields.length.toString() },
-                { label: 'Primary Crop', val: 'Rice (Padi)' },
-                { label: 'Province', val: profile?.province || 'Jawa Tengah' },
-                { label: 'Subdistrict', val: profile?.subdistrict || 'Klaten' },
-              ].map(r => (
-                <div key={r.label} className="pc-info-row">
-                  <span className="pc-info-label">{r.label}</span>
-                  <span className="pc-info-val">{r.val}</span>
+        <div className="pc-card">
+          <div className="pc-card-title">Farm Overview</div>
+          <div className="pc-overview-grid">
+            {[
+              { label: 'Total Area', val: `${totalArea} ha`, icon: '🌾' },
+              { label: 'Active Fields', val: fields.length.toString(), icon: '🗺️' },
+              { label: 'Primary Crop', val: 'Rice (Padi)', icon: '🌱' },
+            ].map(r => (
+              <div key={r.label} className="pc-overview-item">
+                <span className="pc-overview-icon">{r.icon}</span>
+                <div className="pc-overview-details">
+                  <span className="pc-overview-label">{r.label}</span>
+                  <span className="pc-overview-val">{r.val}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pc-card">
-            <div className="pc-card-title">AGRIVO Account</div>
-            <div className="pc-info-rows">
-              {[
-                { label: 'Email', val: profile?.email || '' },
-                { label: 'Phone Number', val: profile?.phone_number || '-' },
-              ].map(r => (
-                <div key={r.label} className="pc-info-row">
-                  <span className="pc-info-label">{r.label}</span>
-                  <span className="pc-info-val">{r.val}</span>
-                </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right: impact stats + settings */}
-        <div className="pc-right">
-          {/* Notifications Settings Panel */}
-          <div className="pc-card">
-            <div className="pc-card-title">Alert & Notification Settings</div>
-            <p className="pc-card-sub">Receive daily AWD recommendations and weather risks directly on your device.</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input
-                  type="checkbox"
-                  checked={whatsappEnabled}
-                  onChange={(e) => setWhatsappEnabled(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#14532D' }}
-                />
-                Enable WhatsApp Alerts (Notifikasi WhatsApp)
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input
-                  type="checkbox"
-                  checked={recAlertEnabled}
-                  onChange={(e) => setRecAlertEnabled(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#14532D' }}
-                />
-                Alert on Recommendation Changes (Notifikasi Rekomendasi)
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                <input
-                  type="checkbox"
-                  checked={weatherAlertEnabled}
-                  onChange={(e) => setWeatherAlertEnabled(e.target.checked)}
-                  style={{ width: '16px', height: '16px', accentColor: '#14532D' }}
-                />
-                Alert on Extreme Weather Risks (Notifikasi Cuaca Ekstrem)
-              </label>
-            </div>
-
-            <button
-              onClick={handleSaveNotifications}
-              disabled={updating}
-              style={{
-                width: '100%',
-                padding: '0.75rem 1.5rem',
-                background: '#14532D',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '10px',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                cursor: updating ? 'not-allowed' : 'pointer',
-                transition: 'background 0.2s',
-              }}
-            >
-              {updating ? 'Saving Changes...' : 'Save Notification Preferences'}
-            </button>
-
-            {message && (
-              <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: message.includes('Failed') ? '#C0392B' : '#14532D', fontWeight: 600 }}>
-                {message}
-              </div>
-            )}
-          </div>
-
+        {/* Environmental Impact */}
+        {impactStats.hasData ? (
           <div className="pc-card">
             <div className="pc-card-title">Your Environmental Impact</div>
-            <p className="pc-card-sub">Cumulative savings since joining AGRIVO — March 2024 to present.</p>
+            <p className="pc-card-sub">Cumulative savings calculated from active irrigation runs.</p>
             <div className="pc-impact-grid">
               {[
-                { icon:'💧', val:'1.8M L', label:'Water Saved', color:'#e8f4fd' },
-                { icon:'🌍', val:'−2.4 t', label:'CO₂-eq Avoided', color:'#f0f7ec' },
-                { icon:'🌾', val:'6.1 t/ha', label:'Best Yield', color:'#faf3e8' },
-                { icon:'📅', val:'472', label:'Days Using AWD', color:'#f5f0fa' },
+                { icon: '💧', val: impactStats.waterSavedL >= 1000000 ? `${(impactStats.waterSavedL / 1000000).toFixed(1)}M L` : impactStats.waterSavedL >= 1000 ? `${(impactStats.waterSavedL / 1000).toFixed(1)}k L` : `${impactStats.waterSavedL} L`, label: 'Water Saved', color: '#e8f4fd' },
+                { icon: '🌍', val: impactStats.co2AvoidedKg >= 1000 ? `−${(impactStats.co2AvoidedKg / 1000).toFixed(1)} t` : `−${impactStats.co2AvoidedKg} kg`, label: 'CO₂-eq Avoided', color: '#f0f7ec' },
+                { icon: '🌾', val: impactStats.bestYield > 0 ? `${impactStats.bestYield.toFixed(1)} t/ha` : '−', label: 'Best Yield', color: '#faf3e8' },
+                { icon: '📅', val: impactStats.totalRecommendations.toString(), label: 'Recommendations Generated', color: '#f5f0fa' },
               ].map(m => (
                 <div key={m.label} className="pc-impact-card" style={{ background: m.color }}>
                   <div className="pc-imp-icon">{m.icon}</div>
@@ -214,42 +161,75 @@ export function ProfileContent() {
               ))}
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="pc-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '240px', textAlign: 'center', color: '#787878' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🍃</div>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#161616', marginBottom: '0.5rem' }}>No Impact Data Yet</h3>
+            <p style={{ fontSize: '0.82rem', color: '#787878', lineHeight: 1.6, margin: 0, maxWidth: '280px' }}>
+              Your cumulative environmental impact statistics will display here once irrigation recommendations are generated.
+            </p>
+          </div>
+        )}
       </div>
 
       <style>{`
         .pc-root { display: flex; flex-direction: column; gap: 2rem; }
-
+ 
         .pc-hero { position: relative; height: 260px; border-radius: 24px; overflow: hidden; }
         .pc-hero-img { object-fit: cover; }
         .pc-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.1)); }
         .pc-hero-content { position: absolute; bottom: 2rem; left: 2rem; display: flex; align-items: center; gap: 1.25rem; }
         .pc-avatar { width: 64px; height: 64px; border-radius: 50%; background: #14532D; color: #fff; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; flex-shrink: 0; }
         .pc-hero-name { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 .2rem; letter-spacing: -.02em; }
+        .pc-hero-phone { font-size: .85rem; color: rgba(255,255,255,0.85); margin: 0; font-weight: 500; }
         .pc-hero-loc { font-size: .85rem; color: rgba(255,255,255,0.7); margin: 0; }
-
-        .pc-body { display: grid; grid-template-columns: 1fr 1.6fr; gap: 1.5rem; }
-
-        .pc-left, .pc-right { display: flex; flex-direction: column; gap: 1.5rem; }
-
+ 
+        .pc-body { display: flex; flex-direction: column; gap: 1.5rem; }
+ 
         .pc-card { background: #fff; border: 1px solid #E8E2D9; border-radius: 20px; padding: 1.75rem; }
         .pc-card-title { font-size: 1rem; font-weight: 800; color: #161616; margin-bottom: 1.25rem; letter-spacing: -.01em; }
         .pc-card-sub { font-size: .82rem; color: #787878; line-height: 1.6; margin-bottom: 1.25rem; margin-top: -.5rem; }
-
-        .pc-info-rows { display: flex; flex-direction: column; }
-        .pc-info-row { display: flex; justify-content: space-between; align-items: center; padding: .7rem 0; border-bottom: 1px solid #F0EDE6; }
-        .pc-info-row:last-child { border-bottom: none; }
-        .pc-info-label { font-size: .8rem; color: #787878; }
-        .pc-info-val { font-size: .85rem; font-weight: 600; color: #161616; text-align: right; }
-
-        .pc-impact-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+ 
+        .pc-overview-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1.5rem;
+        }
+        .pc-overview-item {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          background: #FAF8F3;
+          padding: 1.25rem;
+          border-radius: 14px;
+          border: 1px solid #E8E2D9;
+        }
+        .pc-overview-icon {
+          font-size: 1.8rem;
+        }
+        .pc-overview-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+        }
+        .pc-overview-label {
+          font-size: 0.75rem;
+          color: #787878;
+        }
+        .pc-overview-val {
+          font-size: 1.1rem;
+          font-weight: 800;
+          color: #161616;
+        }
+ 
+        .pc-impact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         .pc-impact-card { border-radius: 14px; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: .3rem; }
         .pc-imp-icon { font-size: 1.4rem; margin-bottom: .25rem; }
         .pc-imp-val { font-size: 1.4rem; font-weight: 800; color: #161616; }
         .pc-imp-lbl { font-size: .68rem; color: #787878; font-weight: 500; }
-
+ 
         @media (max-width: 900px) {
-          .pc-body { grid-template-columns: 1fr; }
+          .pc-overview-grid { grid-template-columns: 1fr; }
           .pc-impact-grid { grid-template-columns: repeat(2, 1fr); }
         }
       `}</style>

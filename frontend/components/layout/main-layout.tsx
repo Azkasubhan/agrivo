@@ -13,11 +13,11 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = getAuthToken();
     if (!token) {
-      window.location.replace('/login');
+      router.replace('/login');
     } else {
       setAuthorized(true);
     }
-  }, []);
+  }, [router]);
 
   if (!authorized) {
     return (

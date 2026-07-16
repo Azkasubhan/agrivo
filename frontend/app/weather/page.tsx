@@ -27,7 +27,7 @@ export default function WeatherPage() {
         }
       } catch (err) {
         console.error('Failed to load fields', err);
-        setError('Gagal memuat data lahan.');
+        setError('Failed to load field data.');
       } finally {
         setLoadingFields(false);
       }
@@ -70,7 +70,7 @@ export default function WeatherPage() {
         setWeatherData([today, ...forecast]);
       } catch (err) {
         console.error('Failed to fetch weather', err);
-        setError('Gagal mengambil data cuaca dari Open-Meteo.');
+        setError('Failed to retrieve weather data from Open-Meteo.');
       } finally {
         setLoadingWeather(false);
       }
@@ -93,8 +93,8 @@ export default function WeatherPage() {
     return (
       <MainLayout>
         <div style={{ padding: '3rem', textAlign: 'center', color: '#787878' }}>
-          <h3>Belum ada lahan terdaftar</h3>
-          <p>Silakan buat lahan baru di menu Analisis Lahan terlebih dahulu.</p>
+          <h3>No fields registered yet</h3>
+          <p>Please create a new field in the Field Analysis menu first.</p>
         </div>
       </MainLayout>
     );
@@ -104,7 +104,7 @@ export default function WeatherPage() {
     <MainLayout>
       <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: '#a09589' }}>
-          Pilih Lahan:
+          Select Field:
         </span>
         <select
           value={selectedFieldId}
@@ -130,7 +130,7 @@ export default function WeatherPage() {
 
       {loadingWeather ? (
         <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', color: '#14532D', fontWeight: 600 }}>
-          Mengambil data cuaca Open-Meteo...
+          Fetching Open-Meteo weather data...
         </div>
       ) : error ? (
         <div style={{ padding: '2rem', background: '#fdf2f0', color: '#C0392B', borderRadius: '16px', border: '1px solid #e8b4b0' }}>
@@ -140,7 +140,7 @@ export default function WeatherPage() {
         <>
           {isEstimated && (
             <div style={{ marginBottom: '1rem', padding: '1rem', background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '16px', color: '#b45309', fontSize: '0.85rem', fontWeight: 500 }}>
-              ⚠️ Menggunakan data estimasi regional karena koneksi ke server cuaca Open-Meteo sedang terganggu.
+              ⚠️ Using regional fallback data because the Open-Meteo weather service connection is interrupted.
             </div>
           )}
           <WeatherContent weather={weatherData} />

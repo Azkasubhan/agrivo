@@ -10,7 +10,7 @@ import { clearAuthToken } from '@/lib/api-client';
 const routes = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3, sub: 'Overview & metrics' },
   { href: '/recommendations', label: 'Recommendations', icon: Lightbulb, sub: 'AI irrigation advice' },
-  { href: '/predict', label: 'AI Predictor', icon: Sparkles, sub: 'Generate AWD strategy' },
+  { href: '/predict', label: 'AI Predictor', icon: Sparkles, sub: 'Generate irrigation strategy' },
   { href: '/field-analysis', label: 'Field Analysis', icon: Leaf, sub: 'Soil & crop data' },
   { href: '/weather', label: 'Weather', icon: Cloud, sub: '7-day forecast' },
   { href: '/profile', label: 'Profile', icon: User, sub: 'Account settings' },
@@ -30,15 +30,11 @@ export function Sidebar() {
     <aside className={`ag-sidebar${collapsed ? ' collapsed' : ''}`}>
       {/* Logo */}
       <div className="ag-sidebar-logo">
-        <Link href="/dashboard" className="ag-sidebar-brand">
-          {!collapsed ? (
+        {!collapsed && (
+          <Link href="/dashboard" className="ag-sidebar-brand">
             <Image src="/logofix.PNG" alt="AGRIVO" width={110} height={40} className="ag-sidebar-logo-img" priority />
-          ) : (
-            <div className="ag-sidebar-icon-wrap">
-              <Image src="/icon-light-32x32.png" alt="A" width={20} height={20} />
-            </div>
-          )}
-        </Link>
+          </Link>
+        )}
         <button className="ag-sidebar-collapse-btn" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle sidebar">
           <ChevronRight size={16} style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform .3s' }} />
         </button>
@@ -64,12 +60,8 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom: back to landing & logout */}
+      {/* Bottom: logout */}
       <div className="ag-sidebar-bottom" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        <Link href="/landing" className="ag-sidebar-landing-link" title={collapsed ? 'Back to site' : undefined}>
-          <ArrowLeft size={16} />
-          {!collapsed && <span>Back to site</span>}
-        </Link>
         <button onClick={handleLogout} className="ag-sidebar-logout-link" title={collapsed ? 'Sign Out' : undefined}>
           <LogOut size={16} />
           {!collapsed && <span>Sign Out</span>}
@@ -86,10 +78,10 @@ export function Sidebar() {
           height: 100vh;
           flex-shrink: 0;
           transition: width .3s cubic-bezier(.4,0,.2,1);
-          overflow: hidden;
+          position: relative;
         }
         .ag-sidebar.collapsed { width: 68px; }
-
+ 
         .ag-sidebar-logo {
           display: flex;
           align-items: center;
@@ -97,10 +89,21 @@ export function Sidebar() {
           padding: 1.5rem 1rem 1rem;
           border-bottom: 1px solid #F0EDE6;
           flex-shrink: 0;
+          position: relative;
+          min-height: 73px;
+          box-sizing: border-box;
+        }
+        .ag-sidebar.collapsed .ag-sidebar-logo {
+          justify-content: center;
+          padding: 1.5rem 0.5rem 1rem;
         }
         .ag-sidebar-brand {
           display: flex; align-items: center; gap: .75rem;
           text-decoration: none; overflow: hidden; white-space: nowrap;
+        }
+        .ag-sidebar.collapsed .ag-sidebar-brand {
+          justify-content: center;
+          width: 100%;
         }
         .ag-sidebar-logo-img { object-fit:contain; }
         .ag-sidebar-icon-wrap {
@@ -110,18 +113,31 @@ export function Sidebar() {
           flex-shrink: 0;
         }
         .ag-sidebar-collapse-btn {
+          position: absolute;
+          right: -12px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
           display: flex; align-items: center; justify-content: center;
-          width: 28px; height: 28px; border-radius: 8px;
-          background: #FAF8F3; border: 1px solid #E8E2D9;
+          width: 24px; height: 24px; border-radius: 50%;
+          background: #ffffff; border: 1px solid #E8E2D9;
           cursor: pointer; color: #787878; flex-shrink: 0;
-          transition: background .2s;
+          transition: background .2s, border-color .2s, box-shadow .2s;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
-        .ag-sidebar-collapse-btn:hover { background: #F0EDE6; }
-
+        .ag-sidebar-collapse-btn:hover {
+          background: #FAF8F3;
+          border-color: #c8c0b4;
+          box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+ 
         .ag-sidebar-nav {
           flex: 1; padding: 1.25rem .75rem;
           display: flex; flex-direction: column; gap: .25rem;
           overflow-y: auto; overflow-x: hidden;
+        }
+        .ag-sidebar.collapsed .ag-sidebar-nav {
+          padding: 1.25rem 0.5rem;
         }
         .ag-sidebar-nav-label {
           font-size: .6rem; font-weight: 700; letter-spacing: .12em;
@@ -148,11 +164,22 @@ export function Sidebar() {
           width: 6px; height: 6px; border-radius: 50%;
           background: #14532D; flex-shrink: 0;
         }
-
+        .ag-sidebar.collapsed .ag-sidebar-link {
+          padding: .75rem 0;
+          justify-content: center;
+          gap: 0;
+        }
+        .ag-sidebar.collapsed .ag-sidebar-link-icon {
+          margin: 0;
+        }
+ 
         .ag-sidebar-bottom {
           padding: 1rem .75rem 1.5rem;
           border-top: 1px solid #F0EDE6;
           flex-shrink: 0;
+        }
+        .ag-sidebar.collapsed .ag-sidebar-bottom {
+          padding: 1rem 0.5rem 1.5rem;
         }
         .ag-sidebar-landing-link {
           display: flex; align-items: center; gap: .6rem;
@@ -170,6 +197,12 @@ export function Sidebar() {
           text-align: left; font-family: inherit;
         }
         .ag-sidebar-logout-link:hover { color: #A93226; background: #fdf2f0; }
+        .ag-sidebar.collapsed .ag-sidebar-landing-link,
+        .ag-sidebar.collapsed .ag-sidebar-logout-link {
+          padding: .75rem 0;
+          justify-content: center;
+          gap: 0;
+        }
       `}</style>
     </aside>
   );
