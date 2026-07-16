@@ -27,6 +27,114 @@ class AppError(Exception):
         super().__init__(message)
 
 
+class DuplicatePhoneNumberError(AppError):
+    """Raised when registering a phone number already in use by an active user."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="PHONE_ALREADY_REGISTERED",
+            message="Nomor telepon sudah terdaftar.",
+            status_code=409,
+        )
+
+
+class DuplicateEmailError(AppError):
+    """Raised when registering an email already in use by an active user."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="EMAIL_ALREADY_REGISTERED",
+            message="Email sudah terdaftar.",
+            status_code=409,
+        )
+
+
+class InvalidCredentialsError(AppError):
+    """Raised when login credentials do not match any active user (generic message)."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="INVALID_CREDENTIALS",
+            message="Nomor telepon atau password salah.",
+            status_code=401,
+        )
+
+
+class InvalidRefreshTokenError(AppError):
+    """Raised when a refresh token is invalid, expired, revoked, or reused."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="INVALID_REFRESH_TOKEN",
+            message="Sesi telah berakhir, silakan login kembali.",
+            status_code=401,
+        )
+
+
+class UnauthorizedError(AppError):
+    """Raised when a request lacks a valid authenticated user context."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="UNAUTHORIZED",
+            message="Autentikasi diperlukan.",
+            status_code=401,
+        )
+
+
+class FieldNotFoundError(AppError):
+    """Raised when a field does not exist or is not owned by the current user."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="FIELD_NOT_FOUND",
+            message="Lahan tidak ditemukan.",
+            status_code=404,
+        )
+
+
+class RiceVarietyNotFoundError(AppError):
+    """Raised when the given rice variety code does not match any reference row."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="RICE_VARIETY_NOT_FOUND",
+            message="Varietas padi tidak ditemukan.",
+            status_code=404,
+        )
+
+
+class PlantingDateInFutureError(AppError):
+    """Raised when planting_date is later than today."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            code="PLANTING_DATE_IN_FUTURE",
+            message="Tanggal tanam tidak boleh di masa depan.",
+            status_code=422,
+            details=[
+                {"field": "planting_date", "issue": "Tanggal tanam tidak boleh di masa depan"}
+            ],
+        )
+
+
+class PlantingDateTooOldError(AppError):
+    """Raised when planting_date exceeds the configured maximum field age."""
+
+    def __init__(self, max_days: int) -> None:
+        super().__init__(
+            code="PLANTING_DATE_TOO_OLD",
+            message=f"Tanggal tanam tidak boleh lebih dari {max_days} hari yang lalu.",
+            status_code=422,
+            details=[
+                {
+                    "field": "planting_date",
+                    "issue": f"Melebihi batas maksimum {max_days} hari sejak tanam",
+                }
+            ],
+        )
+
+
 def register_exception_handlers(application: FastAPI) -> None:
     """Register application-wide exception handlers."""
 
