@@ -17,6 +17,7 @@ function useInView(threshold = 0.15) {
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
+          obs.disconnect();
         }
       },
       { threshold }
@@ -62,8 +63,17 @@ export default function LandingPage() {
   const testi = useInView();
 
   useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 60);
-    window.addEventListener('scroll', h);
+    let ticking = false;
+    const h = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 60);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', h, { passive: true });
     return () => window.removeEventListener('scroll', h);
   }, []);
 
@@ -738,9 +748,10 @@ export default function LandingPage() {
           align-items:center;
           opacity:0; transform:translateY(28px);
           animation:none;
+          will-change: opacity, transform;
         }
         .ag-feature-row.visible {
-          animation:fadeUp .6s ease forwards;
+          animation:fadeUp .6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes fadeUp {
           from { opacity:0; transform:translateY(28px); }
@@ -871,6 +882,7 @@ export default function LandingPage() {
         .ag-scenic-river {
           position: absolute; bottom: -5px; left: 0; width: 200%; height: 100%;
           transform-origin: bottom; opacity: 0.95;
+          will-change: transform;
         }
         .rwave1 { animation: riverPan 12s linear infinite; }
         .rwave2 { animation: riverPan 18s linear infinite reverse; opacity: 0.8; height: 85%; }
