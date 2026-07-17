@@ -307,8 +307,11 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                 ))}
               </div>
 
-              <div className="fa-last-watered">
-                Last irrigated: {selectedField.lastWatered.toLocaleDateString('en', { day:'numeric', month:'long', year:'numeric' })}
+              <div className="fa-last-watered" style={{ marginTop: '1.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#787878', fontWeight: 700 }}>Planting Date</span>
+                <span style={{ fontSize: '0.95rem', color: '#161616', fontWeight: 600 }}>
+                  {selectedField.plantingDate ? selectedField.plantingDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not specified'}
+                </span>
               </div>
             </div>
           </div>
@@ -727,22 +730,23 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
           margin-bottom: 2rem;
         }
 
-        .fa-moisture-section { background: #FAF8F3; border: 1px solid #E8E2D9; border-radius: 14px; padding: 1.25rem; }
-        .fa-moisture-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
-        .fa-moisture-label { font-size: .8rem; font-weight: 600; color: #161616; }
-        .fa-moisture-val { font-size: 1.1rem; font-weight: 800; }
-        .fa-moisture-bar-bg { height: 8px; background: #E8E2D9; border-radius: 999px; overflow: hidden; margin-bottom: .4rem; }
+        .fa-moisture-section { background: #FAF8F3; border: 1px solid #E8E2D9; border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; }
+        .fa-moisture-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .85rem; }
+        .fa-moisture-label { font-size: .85rem; font-weight: 600; color: #161616; }
+        .fa-moisture-val { font-size: 1.25rem; font-weight: 800; }
+        .fa-moisture-bar-bg { height: 10px; background: #E8E2D9; border-radius: 999px; overflow: hidden; margin-bottom: .5rem; }
         .fa-moisture-bar { height: 100%; border-radius: 999px; transition: width .8s ease; }
-        .fa-moisture-scale { display: flex; justify-content: space-between; font-size: .6rem; color: #a09589; }
+        .fa-moisture-scale { display: flex; justify-content: space-between; font-size: .65rem; color: #a09589; }
 
-        .fa-nutrient-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
-        .fa-nutrient-card { background: #fff; border: 1px solid #E8E2D9; border-radius: 12px; padding: 1rem; }
-        .fa-nut-label { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #a09589; margin-bottom: .3rem; }
-        .fa-nut-val { font-size: 1.3rem; font-weight: 800; color: #161616; line-height: 1; }
-        .fa-nut-unit { font-size: .7rem; font-weight: 500; color: #a09589; margin-left: .2rem; }
-        .fa-nut-ideal { font-size: .65rem; color: #787878; margin-top: .2rem; }
+        .fa-nutrient-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .fa-nutrient-card { background: #fff; border: 1px solid #E8E2D9; border-radius: 16px; padding: 1.25rem 1.5rem; transition: transform 0.2s, box-shadow 0.2s; }
+        .fa-nutrient-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); }
+        .fa-nut-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #a09589; margin-bottom: .4rem; }
+        .fa-nut-val { font-size: 1.5rem; font-weight: 800; color: #161616; line-height: 1; }
+        .fa-nut-unit { font-size: .75rem; font-weight: 500; color: #a09589; margin-left: .2rem; }
+        .fa-nut-ideal { font-size: .68rem; color: #787878; margin-top: .3rem; }
 
-        .fa-last-watered { font-size: .78rem; color: #a09589; font-style: italic; }
+        .fa-last-watered { font-size: .78rem; color: #a09589; }
 
         /* Modal Styles */
         .modal-backdrop {

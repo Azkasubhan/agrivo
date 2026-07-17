@@ -29,6 +29,7 @@ export default function FieldAnalysisPage() {
         potassium: 150,
         soilType: f.soil_type || 'CLAY',
         lastWatered: new Date(),
+        plantingDate: f.planting_date ? new Date(f.planting_date) : undefined,
       }));
       
       setFields(mappedFields);

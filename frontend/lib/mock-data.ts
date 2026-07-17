@@ -6,6 +6,7 @@ export interface Field {
   location: string;
   soilType: string;
   lastWatered: Date;
+  plantingDate?: Date;
   moisture: number; // percentage
   ph: number;
   temperature: number; // celsius
