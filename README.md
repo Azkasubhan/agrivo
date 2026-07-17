@@ -1,7 +1,7 @@
 <br>
 <div align="left">
   <img
-    src="frontend/public/agrivo-header.png"
+    src="frontend/public/046ccf6a342df17f2bcdd8a02c36989cf737a1a19edebe284822f11be77df764.png"
     alt="AGRIVO"
     style="width:100%; max-width:1400px;"
   />
