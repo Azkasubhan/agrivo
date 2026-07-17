@@ -14,42 +14,14 @@ const conditionLabel = (c: string) => {
 
 
 
-// Simple SVG-based weather icons — no emojis
-const WeatherIcon = ({ condition, size = 36 }: { condition: string; size?: number }) => {
-  const s = size;
-  if (condition === 'sunny') return (
-    <svg width={s} height={s} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="18" r="7" fill="#FBBF24"/>
-      {[0,45,90,135,180,225,270,315].map((deg, i) => (
-        <line key={i} x1="18" y1="4" x2="18" y2="8" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round"
-          transform={`rotate(${deg} 18 18)`}/>
-      ))}
-    </svg>
-  );
-  if (condition === 'rainy') return (
-    <svg width={s} height={s} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M8 20a7 7 0 1 1 13.5-2H22a5 5 0 0 1 0 10H9a7 7 0 0 1-1-8z" fill="#94A3B8"/>
-      <line x1="12" y1="28" x2="10" y2="33" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="18" y1="28" x2="16" y2="33" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="24" y1="28" x2="22" y2="33" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round"/>
-    </svg>
-  );
-  if (condition === 'cloudy') return (
-    <svg width={s} height={s} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 22a8 8 0 1 1 15.5-2.5H22a6 6 0 0 1 0 12H8a6 6 0 0 1-2-11.5z" fill="#CBD5E1"/>
-    </svg>
-  );
-  // partly-cloudy default
-  return (
-    <svg width={s} height={s} viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="13" cy="12" r="5" fill="#FBBF24"/>
-      {[0,60,120,180,240,300].map((deg, i) => (
-        <line key={i} x1="13" y1="4" x2="13" y2="6.5" stroke="#FBBF24" strokeWidth="1.8" strokeLinecap="round"
-          transform={`rotate(${deg} 13 12)`}/>
-      ))}
-      <path d="M8 22a6 6 0 1 1 11.5-2H20a4.5 4.5 0 0 1 0 9H9a6 6 0 0 1-1-7z" fill="#CBD5E1"/>
-    </svg>
-  );
+// Emojis for weather conditions
+const WeatherIcon = ({ condition, size = 28 }: { condition: string; size?: number }) => {
+  let emoji = '⛅';
+  if (condition === 'sunny') emoji = '☀️';
+  else if (condition === 'rainy') emoji = '🌧️';
+  else if (condition === 'cloudy') emoji = '☁️';
+
+  return <span style={{ fontSize: `${size}px`, display: 'inline-block', lineHeight: 1 }}>{emoji}</span>;
 };
 
 export function WeatherContent({ weather }: Props) {
@@ -152,7 +124,7 @@ export function WeatherContent({ weather }: Props) {
                     background: skip ? '#fde8e5' : reduce ? '#fdf0d0' : '#e8f5ee',
                   }}
                 >
-                  {skip ? '⛔ Skip' : reduce ? '⬇️ Reduce' : '✅ Proceed'}
+                  {skip ? 'Skip' : reduce ? 'Reduce' : 'Proceed'}
                 </div>
                 {d.precipitation > 0 && (
                   <div className="wc-impact-rain">{d.precipitation}mm rain</div>
