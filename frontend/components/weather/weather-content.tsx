@@ -12,12 +12,7 @@ const conditionLabel = (c: string) => {
   return 'Partly Cloudy';
 };
 
-const conditionBg = (c: string) => {
-  if (c === 'sunny') return 'linear-gradient(135deg, #fef9ee, #fef3c7)';
-  if (c === 'rainy') return 'linear-gradient(135deg, #eef4ff, #dbeafe)';
-  if (c === 'cloudy') return 'linear-gradient(135deg, #f3f4f6, #e5e7eb)';
-  return 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
-};
+
 
 // Simple SVG-based weather icons — no emojis
 const WeatherIcon = ({ condition, size = 36 }: { condition: string; size?: number }) => {
@@ -73,7 +68,7 @@ export function WeatherContent({ weather }: Props) {
       </div>
 
       {/* Today hero — compact */}
-      <div className="wc-today" style={{ background: conditionBg(today.condition) }}>
+      <div className="wc-today">
         <div className="wc-today-left">
           <div className="wc-today-label">Today</div>
           <div className="wc-today-temp">{today.temperature}<span className="wc-temp-unit">°C</span></div>
@@ -95,7 +90,7 @@ export function WeatherContent({ weather }: Props) {
           </div>
         </div>
         <div className="wc-today-right">
-          <div className="wc-today-icon"><WeatherIcon condition={today.condition} size={56} /></div>
+
           <div className="wc-today-stats">
             {[
               { icon: <Droplets size={15}/>, label: 'Humidity', val: `${today.humidity}%` },
@@ -173,12 +168,11 @@ export function WeatherContent({ weather }: Props) {
         <h3 className="wc-section-title">Agronomic Insights</h3>
         <div className="wc-tips">
           {[
-            { label: 'TEMP', title: 'Temperature in Range', desc: `At ${today.temperature}°C, rice growth is optimal. Tillering and root development proceed well between 20–35°C.` },
-            { label: 'WIND', title: 'Wind Speed Moderate', desc: `${today.windSpeed} km/h wind helps reduce leaf fungal disease risk. Avoid spraying pesticides on windy days.` },
-            { label: 'HUM', title: 'Humidity Advisory', desc: `Relative humidity at ${today.humidity}% is in the preferred range. Monitor for blast fungus if humidity exceeds 90% for 3+ days.` },
+            { title: 'Temperature in Range', desc: `At ${today.temperature}°C, rice growth is optimal. Tillering and root development proceed well between 20–35°C.` },
+            { title: 'Wind Speed Moderate', desc: `${today.windSpeed} km/h wind helps reduce leaf fungal disease risk. Avoid spraying pesticides on windy days.` },
+            { title: 'Humidity Advisory', desc: `Relative humidity at ${today.humidity}% is in the preferred range. Monitor for blast fungus if humidity exceeds 90% for 3+ days.` },
           ].map(t => (
             <div key={t.title} className="wc-tip-card">
-              <div className="wc-tip-icon-box">{t.label}</div>
               <div>
                 <div className="wc-tip-title">{t.title}</div>
                 <div className="wc-tip-desc">{t.desc}</div>
@@ -195,7 +189,7 @@ export function WeatherContent({ weather }: Props) {
         .wc-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #14532D; margin-bottom: .4rem; }
         .wc-h1 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 800; letter-spacing: -.025em; color: #161616; margin: 0 0 .3rem; }
 
-        .wc-today { border-radius: 20px; padding: 2rem; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: center; }
+        .wc-today { border-radius: 20px; padding: 2rem; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: center; background: #fff; border: 1px solid #E8E2D9; }
         .wc-today-label { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(0,0,0,0.4); margin-bottom: .4rem; }
         .wc-today-temp { font-size: 3.5rem; font-weight: 900; letter-spacing: -.04em; color: #161616; line-height: 1; }
         .wc-temp-unit { font-size: 1.75rem; }
@@ -206,7 +200,7 @@ export function WeatherContent({ weather }: Props) {
         .wc-today-right { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
         .wc-today-icon { }
         .wc-today-stats { display: flex; flex-direction: column; gap: .65rem; width: 100%; }
-        .wc-today-stat { display: flex; align-items: center; gap: .65rem; background: rgba(255,255,255,0.65); border-radius: 10px; padding: .6rem .9rem; }
+        .wc-today-stat { display: flex; align-items: center; gap: .65rem; background: #FAF8F3; border: 1px solid #F0EDE6; border-radius: 10px; padding: .6rem .9rem; }
         .wc-ts-icon { color: rgba(0,0,0,0.4); flex-shrink: 0; }
         .wc-ts-label { font-size: .6rem; font-weight: 600; color: rgba(0,0,0,0.4); text-transform: uppercase; letter-spacing: .08em; }
         .wc-ts-val { font-size: .9rem; font-weight: 700; color: #161616; }
