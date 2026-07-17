@@ -1,11 +1,81 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { Field } from '@/lib/mock-data';
+import { apiClient } from '@/lib/api-client';
+import { Plus, X, Loader2 } from 'lucide-react';
 
-interface Props { fields: Field[]; }
+interface Props {
+  fields: Field[];
+  onFieldAdded?: () => void;
+}
 
-export function FieldAnalysisContent({ fields }: Props) {
+export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Form State
+  const [name, setName] = useState('');
+  const [soilType, setSoilType] = useState('CLAY');
+  const [riceVariety, setRiceVariety] = useState('CIHERANG');
+  const [plantingDate, setPlantingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [area, setArea] = useState('1.0');
+  const [latitude, setLatitude] = useState('-7.7025');
+  const [longitude, setLongitude] = useState('110.6012');
+  const [irrigationSystem, setIrrigationSystem] = useState('TECHNICAL');
+  const [prevIrrigation, setPrevIrrigation] = useState('CONTINUOUS_FLOODING');
+
+  const handleClose = () => {
+    setIsModalOpen(false);
+    setErrorMsg('');
+    // Reset defaults
+    setName('');
+    setSoilType('CLAY');
+    setRiceVariety('CIHERANG');
+    setPlantingDate(new Date().toISOString().split('T')[0]);
+    setArea('1.0');
+    setLatitude('-7.7025');
+    setLongitude('110.6012');
+    setIrrigationSystem('TECHNICAL');
+    setPrevIrrigation('CONTINUOUS_FLOODING');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMsg('');
+
+    try {
+      const payload = {
+        name,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        soil_type: soilType,
+        rice_variety_code: riceVariety,
+        planting_date: plantingDate,
+        field_area_ha: parseFloat(area),
+        previous_irrigation_method: prevIrrigation || null,
+        irrigation_system_type: irrigationSystem || null,
+      };
+
+      await apiClient('/fields', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (onFieldAdded) {
+        onFieldAdded();
+      }
+      handleClose();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Gagal menambahkan lahan. Harap periksa kembali input Anda.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="fa-root">
 
@@ -13,17 +83,21 @@ export function FieldAnalysisContent({ fields }: Props) {
         <div>
           <p className="fa-eyebrow">Field Analysis</p>
           <h1 className="fa-h1">Your Fields</h1>
-          <p className="fa-desc">{fields.length} fields · {fields.reduce((s, f) => s + f.area, 0).toFixed(1)} ha total area</p>
+          <p className="fa-desc">{fields.length} fields · {fields.reduce((s, f) => s + parseFloat(f.area as any || 0), 0).toFixed(1)} ha total area</p>
         </div>
+        <button className="fa-add-btn" onClick={() => setIsModalOpen(true)}>
+          <Plus size={16} />
+          <span>Tambah Lahan</span>
+        </button>
       </div>
 
       {/* Summary cards */}
       <div className="fa-summary-row">
         {[
-          { label: 'Total Area', val: `${fields.reduce((s,f)=>s+f.area,0).toFixed(1)} ha`, icon: '🌾' },
-          { label: 'Avg. Moisture', val: `${Math.round(fields.reduce((s,f)=>s+f.moisture,0)/fields.length)}%`, icon: '💧' },
-          { label: 'Avg. pH', val: (fields.reduce((s,f)=>s+f.ph,0)/fields.length).toFixed(1), icon: '🧪' },
-          { label: 'Avg. Temp', val: `${(fields.reduce((s,f)=>s+f.temperature,0)/fields.length).toFixed(1)}°C`, icon: '🌡️' },
+          { label: 'Total Area', val: `${fields.reduce((s,f)=>s+parseFloat(f.area as any || 0),0).toFixed(1)} ha`, icon: '🌾' },
+          { label: 'Avg. Moisture', val: fields.length > 0 ? `${Math.round(fields.reduce((s,f)=>s+parseFloat(f.moisture as any || 0),0)/fields.length)}%` : '0%', icon: '💧' },
+          { label: 'Avg. pH', val: fields.length > 0 ? (fields.reduce((s,f)=>s+parseFloat(f.ph as any || 0),0)/fields.length).toFixed(1) : '0.0', icon: '🧪' },
+          { label: 'Avg. Temp', val: fields.length > 0 ? `${(fields.reduce((s,f)=>s+parseFloat(f.temperature as any || 0),0)/fields.length).toFixed(1)}°C` : '0°C', icon: '🌡️' },
         ].map(s => (
           <div key={s.label} className="fa-summary-card">
             <div className="fa-sum-icon">{s.icon}</div>
@@ -39,7 +113,7 @@ export function FieldAnalysisContent({ fields }: Props) {
           <div key={field.id} className={`fa-field-card${i % 2 === 1 ? ' reverse' : ''}`}>
             <div className="fa-field-img-wrap">
               <Image
-                src={i === 0 ? '/rice-field-editorial.png' : i === 1 ? '/rice-terraces-hero.png' : '/rice-harvest-golden.png'}
+                src={i % 3 === 0 ? '/rice-field-editorial.png' : i % 3 === 1 ? '/rice-terraces-hero.png' : '/rice-harvest-golden.png'}
                 alt={field.name}
                 fill
                 className="fa-field-img"
@@ -97,13 +171,200 @@ export function FieldAnalysisContent({ fields }: Props) {
         ))}
       </div>
 
+      {/* Add Field Modal */}
+      {isModalOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-content animate-scale-in">
+            <div className="modal-header">
+              <h2 className="modal-title">Tambah Lahan Baru</h2>
+              <button className="modal-close-btn" onClick={handleClose}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="modal-form">
+              {errorMsg && (
+                <div className="form-error-msg">
+                  ⚠️ {errorMsg}
+                </div>
+              )}
+
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label className="form-label">Nama Lahan *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Sawah Bawah Bukit, Blok C"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Jenis Tanah *</label>
+                  <select
+                    value={soilType}
+                    onChange={(e) => setSoilType(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="CLAY">Clay (Liat)</option>
+                    <option value="LOAM">Loam (Lempung)</option>
+                    <option value="SANDY">Sandy (Pasir)</option>
+                    <option value="SILTY">Silty (Lanau)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Varietas Padi *</label>
+                  <select
+                    value={riceVariety}
+                    onChange={(e) => setRiceVariety(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="CIHERANG">Ciherang</option>
+                    <option value="IR64">IR64</option>
+                    <option value="INPARI_32">Inpari 32</option>
+                    <option value="INPARI_42_AGRITAN_GSR">Inpari 42 Agritan GSR</option>
+                    <option value="MEKONGGA">Mekongga</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Tanggal Mulai Tanam *</label>
+                  <input
+                    type="date"
+                    required
+                    value={plantingDate}
+                    onChange={(e) => setPlantingDate(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Luas Lahan (Hektar) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    max="25.00"
+                    required
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Latitude * (-11.0 s/d 6.1)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    min="-11.0000"
+                    max="6.1000"
+                    required
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Longitude * (94.7 s/d 141.1)</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    min="94.7000"
+                    max="141.1000"
+                    required
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Tipe Sistem Irigasi *</label>
+                  <select
+                    value={irrigationSystem}
+                    onChange={(e) => setIrrigationSystem(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="TECHNICAL">Sistem Teknis (Technical)</option>
+                    <option value="SEMI_TECHNICAL">Semi Teknis (Semi-Technical)</option>
+                    <option value="RAINFED">Tadah Hujan (Rainfed)</option>
+                    <option value="COMMUNAL_GRAVITY">Gravitasi Bersama (Communal Gravity)</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Metode Irigasi Sebelumnya *</label>
+                  <select
+                    value={prevIrrigation}
+                    onChange={(e) => setPrevIrrigation(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="CONTINUOUS_FLOODING">Continuous Flooding (Penggenangan Terus-menerus)</option>
+                    <option value="CONTINUOUS_FLOODING_MODIFIED">Modified Continuous Flooding</option>
+                    <option value="AWD_MILD">AWD Mild</option>
+                    <option value="AWD_STRICT">AWD Strict</option>
+                    <option value="DELAYED_IRRIGATION">Delayed Irrigation</option>
+                    <option value="PARTIAL_IRRIGATION">Partial Irrigation</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={handleClose} disabled={isSubmitting}>
+                  Batal
+                </button>
+                <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Lahan</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .fa-root { display: flex; flex-direction: column; gap: 2.5rem; }
 
-        .fa-header { }
+        .fa-header { display: flex; justify-content: space-between; align-items: flex-end; }
         .fa-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #14532D; margin-bottom: .4rem; }
         .fa-h1 { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 800; letter-spacing: -.025em; color: #161616; margin: 0 0 .3rem; }
         .fa-desc { font-size: .9rem; color: #787878; }
+
+        .fa-add-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: #14532D;
+          color: #fff;
+          font-weight: 600;
+          font-size: 0.85rem;
+          padding: 0.75rem 1.25rem;
+          border-radius: 12px;
+          border: none;
+          cursor: pointer;
+          transition: background 0.2s, transform 0.1s;
+          box-shadow: var(--shadow-soft);
+        }
+        .fa-add-btn:hover {
+          background: #0f3d21;
+          transform: translateY(-1px);
+        }
+        .fa-add-btn:active {
+          transform: translateY(0);
+        }
 
         .fa-summary-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
         .fa-summary-card { background: #fff; border: 1px solid #E8E2D9; border-radius: 18px; padding: 1.5rem; text-align: center; transition: box-shadow .2s, transform .2s; }
@@ -145,11 +406,182 @@ export function FieldAnalysisContent({ fields }: Props) {
 
         .fa-last-watered { font-size: .78rem; color: #a09589; font-style: italic; }
 
+        /* Modal Styles */
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(22, 22, 22, 0.4);
+          backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 1.5rem;
+        }
+
+        .modal-content {
+          background: #FAF8F3;
+          border: 1px solid #E8E2D9;
+          border-radius: 24px;
+          max-width: 650px;
+          width: 100%;
+          max-height: 90vh;
+          overflow-y: auto;
+          box-shadow: var(--shadow-modal);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem 2rem;
+          border-bottom: 1px solid #E8E2D9;
+        }
+
+        .modal-title {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: #161616;
+          margin: 0;
+          letter-spacing: -0.01em;
+        }
+
+        .modal-close-btn {
+          background: transparent;
+          border: none;
+          color: #787878;
+          cursor: pointer;
+          padding: 0.25rem;
+          border-radius: 8px;
+          transition: background 0.2s, color 0.2s;
+        }
+        .modal-close-btn:hover {
+          background: #E8E2D9;
+          color: #161616;
+        }
+
+        .modal-form {
+          padding: 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .form-error-msg {
+          background: #FDEDEC;
+          border: 1px solid #FADBD8;
+          color: #C0392B;
+          padding: 0.75rem 1rem;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          font-weight: 500;
+        }
+
+        .form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.25rem 1rem;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+
+        .form-group.full-width {
+          grid-column: span 2;
+        }
+
+        .form-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #5A6F45;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .form-input, .form-select {
+          background: #fff;
+          border: 1px solid #E8E2D9;
+          border-radius: 10px;
+          padding: 0.75rem 1rem;
+          font-size: 0.9rem;
+          color: #161616;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          width: 100%;
+        }
+
+        .form-input:focus, .form-select:focus {
+          outline: none;
+          border-color: #14532D;
+          box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.1);
+        }
+
+        .modal-footer {
+          display: flex;
+          justify-content: flex-end;
+          gap: 0.75rem;
+          margin-top: 1rem;
+          border-top: 1px solid #E8E2D9;
+          padding-top: 1.5rem;
+        }
+
+        .btn-cancel {
+          background: transparent;
+          border: 1px solid #E8E2D9;
+          color: #787878;
+          padding: 0.75rem 1.5rem;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .btn-cancel:hover {
+          background: #F0EDE6;
+        }
+
+        .btn-submit {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: #14532D;
+          border: none;
+          color: #fff;
+          padding: 0.75rem 1.5rem;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        .btn-submit:hover {
+          background: #0f3d21;
+        }
+        .btn-submit:disabled, .btn-cancel:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 1024px) {
+          .fa-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+          .fa-add-btn { width: 100%; justify-content: center; }
           .fa-summary-row { grid-template-columns: repeat(2, 1fr); }
           .fa-field-card, .fa-field-card.reverse { grid-template-columns: 1fr; direction: ltr; gap: 1.5rem; }
           .fa-field-img-wrap { height: 280px; }
           .fa-nutrient-grid { grid-template-columns: repeat(2, 1fr); }
+          .form-group.full-width { grid-column: span 1; }
         }
       `}</style>
     </div>

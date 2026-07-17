@@ -74,7 +74,6 @@ export default function LandingPage() {
   const about = useInView();
   const features = useInView(0.05);
   const rec = useInView();
-  const env = useInView();
   const edu = useInView(0.05);
   const testi = useInView();
 
@@ -269,73 +268,10 @@ export default function LandingPage() {
       {/* ── AI RECOMMENDATION SHOWCASE ───────────────────────── */}
       <section id="recommendation" className="ag-rec-section" ref={rec.ref}>
         <div className={`ag-rec-inner${rec.visible ? ' visible' : ''}`}>
-          <div className="ag-rec-left">
-            {/* Main rec card */}
-            <div className="ag-rec-card">
-              <div className="ag-rec-card-header">
-                <div className="ag-rec-tag">Today's Recommendation</div>
-                <div className="ag-confidence">
-                  <div className="ag-confidence-ring">
-                    <svg viewBox="0 0 64 64" width="64" height="64">
-                      <circle cx="32" cy="32" r="28" fill="none" stroke="#E8E2D9" strokeWidth="4" />
-                      <circle cx="32" cy="32" r="28" fill="none" stroke="#14532D" strokeWidth="4"
-                        strokeDasharray={`${2 * Math.PI * 28 * 0.92} ${2 * Math.PI * 28 * 0.08}`}
-                        strokeDashoffset={2 * Math.PI * 28 * 0.25} strokeLinecap="round" />
-                    </svg>
-                    <span className="ag-conf-pct">92%</span>
-                  </div>
-                  <span className="ag-conf-label">Confidence</span>
-                </div>
-              </div>
-              <div className="ag-rec-strategy">
-                <div className="ag-strategy-icon">🌾</div>
-                <div>
-                  <div className="ag-strategy-label">Recommended Strategy</div>
-                  <div className="ag-strategy-name">Alternate Wetting &amp; Drying</div>
-                </div>
-              </div>
-              <p className="ag-rec-explanation">
-                Based on current soil moisture (74%), the 3-day forecast (no rain expected), and your crop being in
-                the tillering stage, AGRIVO recommends AWD. Allow the field to dry until the water level drops
-                15 cm below surface, then re-flood. This cycle saves significant water with no yield penalty.
-              </p>
-              {/* Timeline */}
-              <div className="ag-timeline">
-                {[
-                  { day: 'Day 1–3', action: 'Allow field to dry naturally' },
-                  { day: 'Day 4', action: 'Check water level (15cm below surface)' },
-                  { day: 'Day 5', action: 'Re-flood to 2–5 cm depth' },
-                  { day: 'Day 8', action: 'Repeat drying cycle' },
-                ].map((t, i) => (
-                  <div key={i} className="ag-timeline-item">
-                    <div className="ag-timeline-dot" />
-                    <div className="ag-timeline-day">{t.day}</div>
-                    <div className="ag-timeline-action">{t.action}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 3 metric mini-cards */}
-            <div className="ag-rec-metrics">
-              {[
-                { icon: '💧', value: '38%', label: 'Water Saving', color: '#e8f4fd' },
-                { icon: '🌾', value: '5.8 t/ha', label: 'Yield Prediction', color: '#f0f7ec' },
-                { icon: '🌍', value: '−24%', label: 'Net GWP', color: '#faf3e8' },
-              ].map(m => (
-                <div key={m.label} className="ag-metric-mini" style={{ background: m.color }}>
-                  <div className="ag-metric-mini-icon">{m.icon}</div>
-                  <div className="ag-metric-mini-val">{m.value}</div>
-                  <div className="ag-metric-mini-label">{m.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="ag-rec-right">
+          <div className="ag-rec-showcase-card animate-fade-up">
             <div className="ag-section-eyebrow">AI Engine</div>
-            <h2 className="ag-section-h2">One clear recommendation, every morning.</h2>
-            <p className="ag-body-text">
+            <h2 className="ag-section-h2" style={{ textAlign: 'center', marginBottom: '1rem' }}>One clear recommendation, every morning.</h2>
+            <p className="ag-body-text" style={{ maxWidth: '600px', margin: '0 auto 1.5rem', textAlign: 'center' }}>
               AGRIVO synthesizes dozens of data streams into a single, actionable recommendation
               delivered to every farmer before 6 AM. No dashboards to parse. No jargon.
               Just clear guidance in your language.
@@ -344,112 +280,19 @@ export default function LandingPage() {
               {['Soil Moisture Sensor', '7-Day Weather Forecast', 'Crop Growth Stage', 'Historical Yield Data', 'GWP Database'].map(s => (
                 <div key={s} className="ag-data-source">
                   <div className="ag-data-dot" />
-                  {s}
+                  <span>{s}</span>
                 </div>
               ))}
             </div>
             <div className="ag-whatsapp-note">
-              <span>📱</span>
+              <span className="wa-icon">📱</span>
               <span>Delivered via <strong>WhatsApp</strong> in Bahasa Indonesia — no app download required.</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── ENVIRONMENTAL IMPACT ─────────────────────────────── */}
-      <section id="impact" className="ag-env-section" ref={env.ref}>
-        {/* Animated Scenic Rainy Landscape */}
-        <div className="ag-env-scenic-bg">
-          {/* Sky & Sun/Moon */}
-          <div className="ag-scenic-sky" />
-          <div className="ag-scenic-moon" />
-
-          {/* Mountains (Layer 5) */}
-          <svg className="ag-scenic-layer layer5" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="#c2d0c0" d="M0,120 L150,70 L350,150 L550,60 L800,130 L1050,50 L1300,120 L1440,80 L1440,320 L0,320 Z" />
-          </svg>
-
-          {/* Distant Hills (Layer 4) */}
-          <svg className="ag-scenic-layer layer4" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="#8bb896" d="M0,180 Q250,110 500,190 T1000,140 T1440,200 L1440,320 L0,320 Z" />
-          </svg>
-
-          {/* Terraces / Fields (Layer 3) */}
-          <svg className="ag-scenic-layer layer3" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="#66a377" d="M0,230 Q200,170 450,240 T950,190 T1440,250 L1440,320 L0,320 Z" />
-          </svg>
-
-          {/* Foreground Hills (Layer 2) */}
-          <svg className="ag-scenic-layer layer2" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="#7cbd8d" d="M0,320 Q250,230 600,280 T1200,240 T1440,300 L1440,320 L0,320 Z" />
-          </svg>
-
-          {/* Front Field (Layer 1) */}
-          <svg className="ag-scenic-layer layer1" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="#4a8258" d="M-100,320 Q350,270 800,320 T1500,290 L1500,350 L-100,350 Z" />
-          </svg>
-
-          {/* Flowing River */}
-          <div className="ag-scenic-river-wrap">
-            <svg className="ag-scenic-river rwave1" viewBox="0 0 1440 320" preserveAspectRatio="none">
-              <path fill="#76c3e3" d="M0,288L48,272C96,256,192,224,288,218.7C384,213,480,235,576,245.3C672,256,768,256,864,245.3C960,235,1056,213,1152,213.3C1248,213,1344,235,1392,245.3L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-            </svg>
-          </div>
-        </div>
-
-        <div className={`ag-env-inner${env.visible ? ' visible' : ''}`}>
-          <div className="ag-env-header">
-            <div className="ag-section-eyebrow" style={{ color: '#DCC9A3' }}>Environmental Impact</div>
-            <h2 className="ag-env-h2">Farming that<br />heals the planet.</h2>
-          </div>
-
-          <div className="ag-env-metrics">
-            {[
-              { icon: '🌿', label: 'Methane Reduction', value: '−32%', sub: 'CH₄ vs. continuous flood', bg: 'rgba(0,0,0,0.03)' },
-              { icon: '⚗️', label: 'N₂O Increase', value: '+8%', sub: 'Partial N₂O offset', bg: 'rgba(0,0,0,0.03)' },
-              { icon: '🌍', label: 'Net GWP', value: '−24%', sub: 'Net global warming potential', bg: 'rgba(0,0,0,0.06)' },
-              { icon: '💧', label: 'Water Saving', value: '38%', sub: 'Per growing season', bg: 'rgba(0,0,0,0.03)' },
-            ].map(m => (
-              <div key={m.label} className="ag-env-card" style={{ background: m.bg }}>
-                <div className="ag-env-icon">{m.icon}</div>
-                <div className="ag-env-value">{m.value}</div>
-                <div className="ag-env-label">{m.label}</div>
-                <div className="ag-env-sub">{m.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="ag-env-chart-row">
-            <div className="ag-env-chart">
-              <div className="ag-env-chart-label">GWP Impact Comparison (kg CO₂-eq / ha)</div>
-              {[
-                { label: 'Continuous Flooding', value: 100, color: '#787878' },
-                { label: 'AGRIVO AWD Strategy', value: 76, color: '#5A6F45' },
-                { label: 'Partial Irrigation', value: 88, color: '#DCC9A3' },
-              ].map(b => (
-                <div key={b.label} className="ag-bar-row">
-                  <span className="ag-bar-label">{b.label}</span>
-                  <div className="ag-bar-track">
-                    <div className="ag-bar-fill" style={{ width: `${b.value}%`, background: b.color }} />
-                  </div>
-                  <span className="ag-bar-val">{b.value}%</span>
-                </div>
-              ))}
-            </div>
-            <div className="ag-env-text">
-              <p className="ag-body-text" style={{ color: 'rgba(0,0,0,0.7)' }}>
-                The IPCC recognizes Alternate Wetting and Drying as one of the highest-impact interventions
-                available to rice farmers. AGRIVO makes AWD implementation practical at scale.
-              </p>
-              <p className="ag-body-text" style={{ color: 'rgba(0,0,0,0.7)', marginTop: '1rem' }}>
-                Partnered with the International Rice Research Institute (IRRI) and calibrated
-                against 8 years of field trial data across Java, Sumatra, and Sulawesi.
-              </p>
-              <Link href={targetLink} className="ag-btn-light" style={{ marginTop: '2rem', display: 'inline-flex', border: '1px solid #ccc' }}>View Full Impact Report →</Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── ENVIRONMENTAL IMPACT SECTION REMOVED ── */}
 
       {/* ── EDUCATION ────────────────────────────────────────── */}
       <section id="education" className="ag-edu-section" ref={edu.ref}>
@@ -788,71 +631,48 @@ export default function LandingPage() {
         /* ── AI REC SECTION ── */
         .ag-rec-section { background:#fff; padding:7rem 2.5rem; }
         .ag-rec-inner {
-          max-width:1200px; margin:0 auto;
-          display:grid; grid-template-columns:1fr 1fr; gap:5rem;
-          align-items:start;
+          max-width:850px; margin:0 auto;
           opacity:0; transform:translateY(28px);
           transition:opacity .7s ease, transform .7s ease;
         }
         .ag-rec-inner.visible { opacity:1; transform:none; }
-        .ag-rec-card {
-          background:#FAF8F3; border-radius:24px;
-          border:1px solid #E8E2D9; padding:2rem;
-          box-shadow:0 8px 32px rgba(0,0,0,0.07);
+        .ag-rec-showcase-card {
+          background:#FAF8F3; border-radius:28px;
+          border:1px solid #E8E2D9; padding:3.5rem;
+          box-shadow:0 12px 40px rgba(0,0,0,0.06);
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:1.5rem;
+          text-align:center;
+          width:100%;
         }
-        .ag-rec-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; }
-        .ag-rec-tag {
-          font-size:.7rem; font-weight:700; letter-spacing:.12em;
-          text-transform:uppercase; color:#14532D;
-          background:#e8f5ee; padding:.35rem .8rem; border-radius:999px;
+        .ag-rec-data-sources {
+          display:grid;
+          grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+          gap:1rem;
+          width:100%;
+          margin-top:1.5rem;
+          margin-bottom:1.5rem;
         }
-        .ag-confidence { display:flex; flex-direction:column; align-items:center; gap:.25rem; }
-        .ag-confidence-ring { position:relative; }
-        .ag-conf-pct {
-          position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-          font-size:.9rem; font-weight:800; color:#14532D;
-        }
-        .ag-conf-label { font-size:.65rem; color:#787878; font-weight:600; }
-        .ag-rec-strategy {
-          display:flex; align-items:center; gap:1rem;
-          background:#fff; border-radius:16px; padding:1.25rem;
-          margin-bottom:1.25rem; border:1px solid #E8E2D9;
-        }
-        .ag-strategy-icon { font-size:1.75rem; }
-        .ag-strategy-label { font-size:.72rem; color:#787878; font-weight:500; }
-        .ag-strategy-name { font-size:1.1rem; font-weight:800; color:#14532D; }
-        .ag-rec-explanation { font-size:.875rem; color:#787878; line-height:1.7; margin-bottom:1.5rem; }
-        .ag-timeline { display:flex; flex-direction:column; gap:.75rem; }
-        .ag-timeline-item {
-          display:grid; grid-template-columns:12px 80px 1fr; gap:.75rem;
-          align-items:center; font-size:.8rem;
-        }
-        .ag-timeline-dot { width:10px; height:10px; border-radius:50%; background:#14532D; flex-shrink:0; }
-        .ag-timeline-day { color:#14532D; font-weight:700; }
-        .ag-timeline-action { color:#787878; }
-        .ag-rec-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:1rem; }
-        .ag-metric-mini {
-          border-radius:16px; padding:1.25rem 1rem; text-align:center;
-          border:1px solid rgba(0,0,0,0.05);
-        }
-        .ag-metric-mini-icon { font-size:1.5rem; margin-bottom:.5rem; }
-        .ag-metric-mini-val { font-size:1.4rem; font-weight:800; color:#161616; }
-        .ag-metric-mini-label { font-size:.72rem; color:#787878; margin-top:.2rem; }
-        .ag-rec-right { padding-top:1rem; }
-        .ag-rec-data-sources { display:flex; flex-direction:column; gap:.65rem; margin-top:1.75rem; }
         .ag-data-source {
-          display:flex; align-items:center; gap:.75rem;
-          font-size:.875rem; color:#787878; font-weight:500;
+          display:flex; align-items:center; justify-content:center; gap:.75rem;
+          font-size:.875rem; color:#787878; font-weight:600;
+          background:#fff;
+          padding:0.75rem 1rem;
+          border-radius:12px;
+          border:1px solid #E8E2D9;
         }
-        .ag-data-dot { width:6px; height:6px; border-radius:50%; background:#14532D; flex-shrink:0; }
+        .ag-data-dot { width:8px; height:8px; border-radius:50%; background:#14532D; flex-shrink:0; }
         .ag-whatsapp-note {
-          display:flex; align-items:flex-start; gap:.75rem;
-          margin-top:2rem; padding:1.25rem; border-radius:14px;
-          background:#f0f7ec; border:1px solid #c8dfc0;
-          font-size:.875rem; color:#5A6F45; line-height:1.6;
+          display:flex; align-items:center; gap:.75rem;
+          padding:1rem 1.75rem; border-radius:14px;
+          background:#e8f5ee; border:1px solid #cbead8;
+          color:#14532D; font-size:0.9rem;
         }
+        .ag-whatsapp-note .wa-icon { font-size:1.25rem; }
 
-        /* ── ENV SECTION ── */
+        /* ── ENV SECTION REMOVED ── */
         .ag-env-section {
           position: relative; padding:7rem 2.5rem; overflow: hidden; color: #161616;
         }
