@@ -208,39 +208,49 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         </div>
       )}
 
-      <div className="fa-header">
-        <div>
-          <p className="fa-eyebrow">Field Analysis</p>
-          <h1 className="fa-h1">Your Fields</h1>
-          <p className="fa-desc">{fields.length} fields · {fields.reduce((s, f) => s + parseFloat(f.area as any || 0), 0).toFixed(1)} ha total area</p>
-        </div>
-        <button className="fa-add-btn" onClick={() => setIsModalOpen(true)}>
-          <Plus size={16} />
-          <span>Add Field</span>
-        </button>
-      </div>
-
-      {/* Summary cards */}
-      <div className="fa-summary-row">
-        {[
-          { label: 'Total Area', val: `${fields.reduce((s,f)=>s+parseFloat(f.area as any || 0),0).toFixed(1)} ha`, icon: '🌾' },
-          { label: 'Avg. Moisture', val: fields.length > 0 ? `${Math.round(fields.reduce((s,f)=>s+parseFloat(f.moisture as any || 0),0)/fields.length)}%` : '0%', icon: '💧' },
-          { label: 'Avg. pH', val: fields.length > 0 ? (fields.reduce((s,f)=>s+parseFloat(f.ph as any || 0),0)/fields.length).toFixed(1) : '0.0', icon: '🧪' },
-          { label: 'Avg. Temp', val: fields.length > 0 ? `${(fields.reduce((s,f)=>s+parseFloat(f.temperature as any || 0),0)/fields.length).toFixed(1)}°C` : '0°C', icon: '🌡️' },
-        ].map(s => (
-          <div key={s.label} className="fa-summary-card">
-            <div className="fa-sum-icon">{s.icon}</div>
-            <div className="fa-sum-val">{s.val}</div>
-            <div className="fa-sum-lbl">{s.label}</div>
+      {!selectedField && (
+        <>
+          <div className="fa-header">
+            <div>
+              <p className="fa-eyebrow">Field Analysis</p>
+              <h1 className="fa-h1">Your Fields</h1>
+              <p className="fa-desc">{fields.length} fields · {fields.reduce((s, f) => s + parseFloat(f.area as any || 0), 0).toFixed(1)} ha total area</p>
+            </div>
+            <button className="fa-add-btn" onClick={() => setIsModalOpen(true)}>
+              <Plus size={16} />
+              <span>Add Field</span>
+            </button>
           </div>
-        ))}
-      </div>
+
+          {/* Summary cards */}
+          <div className="fa-summary-row">
+            {[
+              { label: 'Total Area', val: `${fields.reduce((s,f)=>s+parseFloat(f.area as any || 0),0).toFixed(1)} ha`, icon: '🌾' },
+              { label: 'Avg. Moisture', val: fields.length > 0 ? `${Math.round(fields.reduce((s,f)=>s+parseFloat(f.moisture as any || 0),0)/fields.length)}%` : '0%', icon: '💧' },
+              { label: 'Avg. pH', val: fields.length > 0 ? (fields.reduce((s,f)=>s+parseFloat(f.ph as any || 0),0)/fields.length).toFixed(1) : '0.0', icon: '🧪' },
+              { label: 'Avg. Temp', val: fields.length > 0 ? `${(fields.reduce((s,f)=>s+parseFloat(f.temperature as any || 0),0)/fields.length).toFixed(1)}°C` : '0°C', icon: '🌡️' },
+            ].map(s => (
+              <div key={s.label} className="fa-summary-card">
+                <div className="fa-sum-icon">{s.icon}</div>
+                <div className="fa-sum-val">{s.val}</div>
+                <div className="fa-sum-lbl">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {selectedField ? (
         <div className="fa-detail-view animate-scale-in">
-          <button className="fa-back-btn" onClick={() => setSelectedField(null)}>
-            &larr; Back to Fields
-          </button>
+          <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p className="fa-eyebrow">Field Analysis</p>
+              <h1 className="fa-h1" style={{ fontSize: '2rem', fontWeight: 800, color: '#14532D', margin: '0.25rem 0 0' }}>{selectedField.name}</h1>
+            </div>
+            <button className="fa-back-btn-top" onClick={() => setSelectedField(null)}>
+              &larr; Back to Fields
+            </button>
+          </div>
           
           <div className="fa-detail-layout">
             <div className="fa-detail-sidebar">
@@ -261,9 +271,8 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
             </div>
             
             <div className="fa-detail-info">
-              <div className="fa-detail-eyebrow">{selectedField.location}</div>
-              <h1 className="fa-detail-title">{selectedField.name}</h1>
-              <p className="fa-detail-soil">Soil type: {selectedField.soilType}</p>
+              <div style={{ fontSize: '0.8rem', color: '#787878', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{selectedField.location}</div>
+              <div style={{ fontSize: '1rem', fontWeight: 600, color: '#5A6F45', marginBottom: '1.5rem' }}>Soil type: {selectedField.soilType}</div>
 
               {/* Moisture bar */}
               <div className="fa-moisture-section">
@@ -630,22 +639,23 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         }
 
         /* Detail View Styles */
-        .fa-back-btn {
+        .fa-back-btn-top {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          background: transparent;
-          border: none;
+          background: #FAF8F3;
+          border: 1px solid #E8E2D9;
           color: #5A6F45;
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           cursor: pointer;
-          padding: 0.5rem 0;
-          margin-bottom: 1.5rem;
-          transition: color 0.2s;
+          padding: 0.6rem 1.2rem;
+          border-radius: 10px;
+          transition: background 0.2s, color 0.2s;
         }
 
-        .fa-back-btn:hover {
+        .fa-back-btn-top:hover {
+          background: #F0EDE6;
           color: #14532D;
         }
 
