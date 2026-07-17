@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Droplets, ThermometerSun, Wind, ArrowRight } from 'lucide-react';
+import { CustomSelect } from '../ui/custom-select';
 
 interface DashboardContentProps {
   fields: any[];
@@ -56,8 +57,14 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
     day: 'numeric'
   });
 
-  // Extract current weather from snapshot
-  const todayWeather = weather?.forecast_list?.[0] || {
+  // Extract current weather from API response (mapping from database snapshot layout)
+  const todayWeather = weather ? {
+    temperature_mean: weather.temperature_c,
+    relative_humidity_mean: weather.humidity_percent,
+    precipitation_sum: weather.precipitation_mm,
+    wind_speed_max: weather.wind_speed_kmh,
+    weather_condition: weather.weather_condition
+  } : {
     temperature_mean: 28,
     relative_humidity_mean: 75,
     precipitation_sum: 0,
@@ -65,31 +72,44 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
     weather_condition: 'sunny'
   };
 
+  const forecastList = weather?.forecast || [];
+
   return (
     <div className="db-root">
-      {/* ── Greeting ── */}
-      <div className="db-greeting">
+      {/* ── Greeting & Field Selector ── */}
+      <div className="db-greeting" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
           <p className="db-greeting-sub">{currentDate}</p>
-          <h1 className="db-greeting-h1">Good morning, {profile?.full_name || 'Farmer'} 👋</h1>
+          <h1 className="db-greeting-h1">Good morning, {profile?.full_name || 'Farmer'}</h1>
           <p className="db-greeting-desc">
             {fields.length === 0 
               ? 'Welcome to AGRIVO! Get started by adding your first rice field.'
               : `Here's your farm overview for today. ${criticals === 0 ? 'All fields are healthy.' : `${criticals} critical alert(s) need attention.`}`}
           </p>
         </div>
+        {fields.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '220px' }}>
+            <label style={{ fontSize: '0.68rem', fontWeight: 800, color: '#a09589', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Active Field</label>
+            <CustomSelect
+              value={selectedFieldId || ''}
+              onChange={(val) => onFieldSelect?.(val)}
+              options={fields.map(f => ({
+                value: f.id,
+                label: `${f.name} (${f.area.toFixed(1)} ha)`
+              }))}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Metric Cards ── */}
       <div className="db-metrics">
         {[
-          { label: 'Total Farm Area', value: `${totalArea.toFixed(1)} ha`, sub: `${fields.length} active fields`, icon: '🌾', trend: 'Map and soil-type synced' },
-          { label: 'Avg. Soil Moisture', value: `${avgMoisture}%`, sub: 'Across all fields', icon: '💧', trend: 'Optimal range: 65–80%' },
-          { label: 'Critical Alerts', value: String(criticals), sub: criticals === 0 ? 'No immediate threats' : 'Action recommended', icon: '⚠️', trend: 'Check AI Engine output' },
-          { label: 'AI Confidence', value: topRec ? `${Math.round(topRec.confidence_score * 100)}%` : '92%', sub: 'Based on current run', icon: '🤖', trend: 'Hybrid decision matrix' },
+          { label: 'Total Farm Area', value: `${totalArea.toFixed(1)} ha`, sub: `${fields.length} active fields`, trend: 'Map and soil-type synced' },
+          { label: 'Avg. Soil Moisture', value: `${avgMoisture}%`, sub: 'Across all fields', trend: 'Optimal range: 65–80%' },
+          { label: 'Critical Alerts', value: String(criticals), sub: criticals === 0 ? 'No immediate threats' : 'Action recommended', trend: 'Check AI Engine output' },
         ].map(m => (
           <div key={m.label} className="db-metric-card">
-            <div className="db-metric-icon">{m.icon}</div>
             <div className="db-metric-body">
               <div className="db-metric-label">{m.label}</div>
               <div className="db-metric-value">{m.value}</div>
@@ -111,19 +131,6 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
                 <div>
                   <div className="db-panel-eyebrow">AI Recommendation · Latest</div>
                   <h2 className="db-panel-h2">{topRec.recommended_strategy_display}</h2>
-                </div>
-                <div className="db-confidence-badge">
-                  <div className="db-conf-ring">
-                    <svg viewBox="0 0 56 56" width="56" height="56">
-                      <circle cx="28" cy="28" r="23" fill="none" stroke="#E8E2D9" strokeWidth="3.5"/>
-                      <circle cx="28" cy="28" r="23" fill="none" stroke="#14532D" strokeWidth="3.5"
-                        strokeDasharray={`${2*Math.PI*23*(topRec.confidence_score || 0.92)} ${2*Math.PI*23*(1 - (topRec.confidence_score || 0.92))}`}
-                        strokeDashoffset={2*Math.PI*23*0.25}
-                        strokeLinecap="round"/>
-                    </svg>
-                    <span className="db-conf-pct">{Math.round((topRec.confidence_score || 0.92) * 100)}%</span>
-                  </div>
-                  <span className="db-conf-label">Confidence</span>
                 </div>
               </div>
 
@@ -201,7 +208,7 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
                 </div>
                 <div className="db-weather-detail">
                   <Wind size={14} className="db-wd-icon" />
-                  <span>Wind Speed</span>
+                  <span>Wind</span>
                   <span className="db-wd-val">{Math.round(todayWeather.wind_speed_max)} km/h</span>
                 </div>
                 <div className="db-weather-detail">
@@ -211,19 +218,22 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
                 </div>
               </div>
               
-              {weather.forecast_list && weather.forecast_list.length > 0 && (
+              {forecastList && forecastList.length > 0 && (
                 <>
-                  <div className="db-weather-week-label">7-Day Outlook</div>
+                  <div className="db-weather-week-label">Outlook</div>
                   <div className="db-weather-week">
-                    {weather.forecast_list.slice(0, 7).map((d: any, i: number) => (
-                      <div key={i} className="db-weather-day">
-                        <div className="db-weather-day-name">
-                          {i === 0 ? 'Today' : new Date(d.date).toLocaleDateString('en', { weekday: 'short' })}
+                    {forecastList.slice(0, 4).map((d: any, i: number) => {
+                      const t_mean = d.temperature_mean ?? ((d.temperature_max + d.temperature_min) / 2);
+                      return (
+                        <div key={i} className="db-weather-day">
+                          <div className="db-weather-day-name">
+                            {i === 0 ? 'Today' : new Date(d.date).toLocaleDateString('en', { weekday: 'short' })}
+                          </div>
+                          <div className="db-weather-day-icon">{weatherIcon(d.weather_condition)}</div>
+                          <div className="db-weather-day-temp">{Math.round(t_mean)}°</div>
                         </div>
-                        <div className="db-weather-day-icon">{weatherIcon(d.weather_condition)}</div>
-                        <div className="db-weather-day-temp">{Math.round(d.temperature_mean)}°</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -248,15 +258,15 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
             <Link href="/recommendations" className="db-see-all">Open AI Engine →</Link>
           </div>
           <div className="db-alerts-list">
-            {recommendations.map(rec => {
+            {recommendations.slice(0, 3).map(rec => {
               const dateObj = new Date(rec.created_at || new Date());
               return (
                 <div key={rec.id} className="db-alert-item" style={{ background: '#fff', borderColor: '#E8E2D9' }}>
                   <div className="db-alert-dot" style={{ background: '#14532D' }} />
                   <div className="db-alert-body">
-                    <div className="db-alert-title">{rec.recommended_strategy_display || 'Rekomendasi'}</div>
+                    <div className="db-alert-title">{rec.recommended_strategy_display || 'Recommendation'}</div>
                     <div className="db-alert-desc" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {rec.description || 'Detail strategi.'}
+                      {rec.description || 'Strategy detail.'}
                     </div>
                     <div className="db-alert-meta" style={{ marginTop: '0.75rem' }}>
                       <span className="db-alert-tag">{dateObj.toLocaleDateString()}</span>
@@ -342,7 +352,7 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
         .db-greeting-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #14532D; }
 
         /* Metrics */
-        .db-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .db-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
         .db-metric-card {
           background: #fff; border: 1px solid #E8E2D9; border-radius: 20px;
           padding: 1.5rem; display: flex; flex-direction: column; gap: .75rem;
@@ -379,18 +389,19 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
         .db-rec-link { display: inline-flex; align-items: center; gap: .4rem; font-size: .85rem; font-weight: 600; color: #14532D; text-decoration: none; border-bottom: 1px solid #14532D; padding-bottom: .1rem; width: fit-content; }
 
         /* Weather Panel */
-        .db-weather-panel { background: #fff; border: 1px solid #E8E2D9; border-radius: 24px; padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between; }
-        .db-weather-today { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
-        .db-weather-temp { font-size: 3rem; font-weight: 900; letter-spacing: -.04em; color: #161616; line-height: 1; }
-        .db-weather-cond { font-size: .85rem; color: #787878; margin-top: .25rem; text-transform: capitalize; }
-        .db-weather-emoji { font-size: 2.5rem; }
-        .db-weather-details { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.5rem; }
-        .db-weather-detail { display: flex; align-items: center; gap: .6rem; font-size: .8rem; color: #787878; }
+        .db-weather-panel { background: #fff; border: 1px solid #E8E2D9; border-radius: 24px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: flex-start; gap: 1rem; }
+        .db-weather-today { display: flex; justify-content: space-between; align-items: center; background: #FAF8F3; border: 1px solid #F0EDE6; border-radius: 16px; padding: 1rem 1.25rem; }
+        .db-weather-temp { font-size: 2.2rem; font-weight: 900; letter-spacing: -.03em; color: #161616; line-height: 1; }
+        .db-weather-cond { font-size: .8rem; color: #787878; margin-top: .15rem; text-transform: capitalize; }
+        .db-weather-emoji { font-size: 2.2rem; }
+        .db-weather-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+        .db-weather-detail { background: #fff; border: 1px solid #E8E2D9; border-radius: 12px; padding: 0.65rem 0.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.2rem; font-size: 0.72rem; }
+        .db-weather-detail span { color: #787878; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         .db-wd-icon { color: #a09589; flex-shrink: 0; }
-        .db-wd-val { margin-left: auto; font-weight: 600; color: #161616; }
-        .db-weather-week-label { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #a09589; margin-bottom: .75rem; }
-        .db-weather-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: .4rem; }
-        .db-weather-day { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding: .5rem .25rem; border-radius: 10px; background: #FAF8F3; }
+        .db-wd-val { font-size: 0.82rem; font-weight: 700; color: #161616; }
+        .db-weather-week-label { font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #a09589; margin-top: 0.25rem; }
+        .db-weather-week { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+        .db-weather-day { display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .6rem .25rem; border-radius: 12px; background: #FAF8F3; border: 1px solid #F0EDE6; }
         .db-weather-day-name { font-size: .6rem; font-weight: 600; color: #a09589; }
         .db-weather-day-icon { font-size: 1rem; }
         .db-weather-day-temp { font-size: .72rem; font-weight: 700; color: #161616; }

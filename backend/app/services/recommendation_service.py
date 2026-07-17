@@ -59,7 +59,9 @@ class RecommendationService:
     def _map_to_response(self, rec: Recommendation) -> dict[str, Any]:
         """Map Recommendation ORM object to its response payload dict."""
         pred = rec.prediction
-        raw_derived = rec.weather_snapshot.raw_data.get("_derived", {})
+        raw_derived: dict = {}
+        if rec.weather_snapshot and rec.weather_snapshot.raw_data:
+            raw_derived = rec.weather_snapshot.raw_data.get("_derived", {})
 
         # Compute dynamic UI helpers
         strategy_display = self._get_strategy_display(rec.recommended_strategy)
@@ -94,12 +96,12 @@ class RecommendationService:
         prediction_dict = None
         if pred:
             prediction_dict = {
-                "water_saving_percent": float(pred.water_saving_percent),
-                "expected_yield_ton_per_ha": float(pred.expected_yield_ton_per_ha),
-                "yield_baseline_ton_per_ha": float(pred.yield_baseline_ton_per_ha),
-                "ch4_reduction_percent": float(pred.ch4_reduction_percent),
-                "n2o_change_percent": float(pred.n2o_change_percent),
-                "net_gwp_reduction_percent": float(pred.net_gwp_reduction_percent),
+                "water_saving_percent": float(pred.water_saving_percent or 0),
+                "expected_yield_ton_per_ha": float(pred.expected_yield_ton_per_ha or 0),
+                "yield_baseline_ton_per_ha": float(pred.yield_baseline_ton_per_ha or 0),
+                "ch4_reduction_percent": float(pred.ch4_reduction_percent or 0),
+                "n2o_change_percent": float(pred.n2o_change_percent or 0),
+                "net_gwp_reduction_percent": float(pred.net_gwp_reduction_percent or 0),
             }
 
         return {
@@ -108,7 +110,7 @@ class RecommendationService:
             "weather_snapshot_id": str(rec.weather_snapshot_id),
             "recommended_strategy": rec.recommended_strategy.value,
             "recommended_strategy_display": strategy_display,
-            "confidence_score": float(rec.confidence_score),
+            "confidence_score": float(rec.confidence_score or 0),
             "engine_type": rec.engine_type,
             "model_version": rec.model_version,
             "created_at": rec.created_at.isoformat(),

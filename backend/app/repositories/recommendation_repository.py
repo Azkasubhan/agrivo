@@ -59,6 +59,7 @@ class RecommendationRepository:
                 statement.options(
                     joinedload(Recommendation.prediction),
                     joinedload(Recommendation.weather_snapshot),
+                    joinedload(Recommendation.field),
                 )
                 .order_by(Recommendation.created_at.desc())
                 .offset((page - 1) * page_size)

@@ -52,16 +52,20 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadFieldSpecificData() {
       if (!selectedFieldId) return;
-      try {
-        const [weatherRes, recsRes] = await Promise.all([
-          apiClient<{ data: any }>(`/fields/${selectedFieldId}/weather`),
-          apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations`),
-        ]);
 
+      // Load weather and recommendations independently — one failure won't block the other
+      try {
+        const weatherRes = await apiClient<{ data: any }>(`/fields/${selectedFieldId}/weather`);
         setWeather(weatherRes.data);
-        setRecommendations(recsRes.data.items || recsRes.data);
       } catch (err) {
-        console.error('Failed to load field data', err);
+        console.error('Failed to load weather data', err);
+      }
+
+      try {
+        const recsRes = await apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations`);
+        setRecommendations(recsRes.data.items || recsRes.data || []);
+      } catch (err) {
+        console.error('Failed to load recommendations data', err);
       }
     }
     loadFieldSpecificData();

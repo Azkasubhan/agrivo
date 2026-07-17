@@ -432,11 +432,13 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                   <input
                     type="text"
                     required
-                    readOnly
-                    placeholder="Select on map"
+                    placeholder="Enter latitude or select on map"
                     value={latitude}
+                    onChange={(e) => {
+                      setLatitude(e.target.value);
+                      setErrors(prev => ({ ...prev, latitude: undefined }));
+                    }}
                     className={`form-input${errors.latitude ? ' error' : ''}`}
-                    style={{ background: '#F4F1EA', cursor: 'not-allowed', color: '#555' }}
                   />
                   {errors.latitude && <span className="field-error-text">{errors.latitude}</span>}
                 </div>
@@ -446,11 +448,13 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                   <input
                     type="text"
                     required
-                    readOnly
-                    placeholder="Select on map"
+                    placeholder="Enter longitude or select on map"
                     value={longitude}
+                    onChange={(e) => {
+                      setLongitude(e.target.value);
+                      setErrors(prev => ({ ...prev, longitude: undefined }));
+                    }}
                     className={`form-input${errors.longitude ? ' error' : ''}`}
-                    style={{ background: '#F4F1EA', cursor: 'not-allowed', color: '#555' }}
                   />
                   {errors.longitude && <span className="field-error-text">{errors.longitude}</span>}
                 </div>

@@ -42,6 +42,7 @@ export default function RecommendationsPage() {
 
   const [activeStrategyKey, setActiveStrategyKey] = useState('AWD_MILD');
   const activeStrategy = STRATEGIES.find(s => s.key === activeStrategyKey) || STRATEGIES[0];
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   const genTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -114,44 +115,22 @@ export default function RecommendationsPage() {
 
     try {
       // 120 second timeout — AI Engine can take 30-60s
-      const response = await apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations?preview=true`, {
+      // We call POST without preview=true so that it is persisted instantly as active
+      await apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations`, {
         method: 'POST',
         timeout: 120000,
       });
       if (genTimerRef.current) clearInterval(genTimerRef.current);
       setGenStep(GENERATE_STEPS.length); // all done
-      setPreviewRec(response.data);
+      await fetchRecommendations(selectedFieldId);
     } catch (err: any) {
       console.error('Failed to generate recommendation', err);
-      if (err.message?.includes('timed out')) {
-        setError('AI Engine timed out. Please try again.');
-      } else {
-        setError(err.message || 'Failed to run AI Engine.');
-      }
+      setError(err.message || 'Failed to run AI Engine.');
     } finally {
       if (genTimerRef.current) clearInterval(genTimerRef.current);
       setGenerating(false);
     }
   };
-
-  const handleSavePreview = async () => {
-    if (!selectedFieldId || !previewRec) return;
-    setSavingRec(true);
-    setError(null);
-    try {
-      await apiClient(`/fields/${selectedFieldId}/recommendations/${previewRec.id}/save`, {
-        method: 'PATCH',
-      });
-      setPreviewRec(null);
-      await fetchRecommendations(selectedFieldId);
-    } catch (err: any) {
-      console.error('Failed to save recommendation', err);
-      setError(err.message || 'Failed to save recommendation.');
-    } finally {
-      setSavingRec(false);
-    }
-  };
-
   if (loadingFields) {
     return (
       <MainLayout>
@@ -299,62 +278,6 @@ export default function RecommendationsPage() {
           </div>
         )}
 
-        {/* ── Preview Mode ── */}
-        {previewRec && !generating && (
-          <div style={{ background: '#f8faf6', border: '2px solid #c0d9b4', borderRadius: '18px', padding: '1.5rem', margin: '1.5rem 0', boxShadow: '0 8px 24px rgba(20,83,45,0.08)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#e0f0d8', color: '#14532D', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-                  <Sparkles size={14} /> Preview AI
-                </div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#161616', margin: 0 }}>
-                  {previewRec.recommended_strategy_display}
-                </h3>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  onClick={() => setPreviewRec(null)}
-                  disabled={savingRec}
-                  style={{ background: '#fff', border: '1px solid #E8E2D9', color: '#787878', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  Discard
-                </button>
-                <button
-                  onClick={handleSavePreview}
-                  disabled={savingRec}
-                  style={{ background: '#14532D', border: 'none', color: '#fff', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(20,83,45,0.2)' }}
-                >
-                  {savingRec ? <Loader size={16} className="rp-spin" /> : <CheckCircle size={16} />}
-                  Save Strategy
-                </button>
-              </div>
-            </div>
-            
-            <p style={{ color: '#555', fontSize: '0.95rem', lineHeight: 1.6, margin: '0 0 1.5rem 0', maxWidth: '800px' }}>
-              {previewRec.description}
-            </p>
-
-            {previewRec.prediction && (
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
-                  <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>💧</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>{Math.round(previewRec.prediction.water_saving_percent)}%</div>
-                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Water Saved</div>
-                </div>
-                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
-                  <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🌾</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>{parseFloat(previewRec.prediction.expected_yield_ton_per_ha).toFixed(1)} t/ha</div>
-                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Expected Yield</div>
-                </div>
-                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
-                  <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🌍</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>-{Math.round(previewRec.prediction.net_gwp_reduction_percent)}%</div>
-                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Emissions Cut</div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {error && (
           <div style={{ padding: '1rem', background: '#fdf2f0', color: '#C0392B', borderRadius: '16px', border: '1px solid #e8b4b0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -365,53 +288,96 @@ export default function RecommendationsPage() {
 
         {loadingRecs ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: '#14532D', fontWeight: 600 }}>
-            Loading history...
+            Loading recommendation list...
           </div>
         ) : latestRec ? (
           <>
             {/* Featured AI Recommendation */}
             <div className="rp-featured">
-              <div className="rp-featured-header">
-                <div className="rp-featured-left">
-                  <span className="rp-feat-tag">Today's Strategy</span>
+              <div className="rp-featured-header" style={{ alignItems: 'flex-start' }}>
+                <div className="rp-featured-left" style={{ width: '100%' }}>
+                  <span className="rp-feat-tag">Current Primary Recommendation</span>
                   <h2 className="rp-feat-title">{latestRec.recommended_strategy_display}</h2>
-                  <p className="rp-feat-desc" style={{ color: '#555', fontStyle: 'italic', marginBottom: '1rem' }}>
-                    {latestRec.description || 'Loading justification...'}
+                  <p className="rp-feat-desc" style={{ color: '#555', fontStyle: 'italic', marginBottom: '1.25rem' }}>
+                    {latestRec.description || 'Loading justification details...'}
                   </p>
                   
                   {latestRec.explanation && (
-                    <div style={{ background: '#FAF8F3', padding: '1rem', borderRadius: '12px', border: '1px solid #E8E2D9', marginTop: '1rem' }}>
-                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>How to implement:</h4>
-                      <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: 1.5 }}>
-                        {latestRec.explanation.how_to_implement}
-                      </p>
+                    <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {/* Implementation Guide */}
+                      <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
+                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>
+                          Implementation Guide
+                        </h4>
+                        <p style={{ fontSize: '0.8rem', color: '#555', lineHeight: 1.5, margin: 0 }}>
+                          {latestRec.explanation.how_to_implement}
+                        </p>
+                      </div>
+
+                      {/* Climate Adaptation & Crop Security */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        {/* Benefits (Yield & Resource Optimization) */}
+                        {latestRec.explanation.benefits && latestRec.explanation.benefits.length > 0 && (
+                          <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>
+                              Yield and Resource Benefits
+                            </h4>
+                            <ol style={{ fontSize: '0.78rem', color: '#555', lineHeight: 1.5, margin: 0, paddingLeft: '1.2rem', listStyleType: 'decimal' }}>
+                              {latestRec.explanation.benefits.map((b: string, idx: number) => (
+                                <li key={idx} style={{ marginBottom: '0.35rem' }}>{b}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+
+                        {/* Trade-offs & Risk Warnings */}
+                        {latestRec.explanation.tradeoffs && latestRec.explanation.tradeoffs.length > 0 && (
+                          <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#b07d10', marginBottom: '0.5rem' }}>
+                              Agronomic Considerations and Risks
+                            </h4>
+                            <ol style={{ fontSize: '0.78rem', color: '#555', lineHeight: 1.5, margin: 0, paddingLeft: '1.2rem', listStyleType: 'decimal' }}>
+                              {latestRec.explanation.tradeoffs.map((t: string, idx: number) => (
+                                <li key={idx} style={{ marginBottom: '0.35rem' }}>{t}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Security Constraints (Why other strategies were excluded to prevent failure) */}
+                      {latestRec.explanation.rule_constraints_applied && latestRec.explanation.rule_constraints_applied.length > 0 && (
+                        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
+                          <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#161616', marginBottom: '0.5rem' }}>
+                            Crop Protection and Safeguards
+                          </h4>
+                          <ol style={{ fontSize: '0.78rem', color: '#555', lineHeight: 1.5, margin: 0, paddingLeft: '1.2rem', listStyleType: 'decimal' }}>
+                            {latestRec.explanation.rule_constraints_applied.map((reason: string, idx: number) => (
+                              <li key={idx} style={{ marginBottom: '0.35rem' }}>{reason}</li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      {/* Social Governance note for communal systems */}
+                      {latestRec.explanation.governance_note && (
+                        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9', fontSize: '0.78rem', color: '#555', lineHeight: 1.5 }}>
+                          <strong>Water Supply Coordination:</strong> {latestRec.explanation.governance_note}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-                <div className="rp-conf-wrap">
-                  <div className="rp-conf-circle">
-                    <svg viewBox="0 0 80 80" width="80" height="80">
-                      <circle cx="40" cy="40" r="34" fill="none" stroke="#F0EDE6" strokeWidth="5"/>
-                      <circle cx="40" cy="40" r="34" fill="none" stroke="#14532D" strokeWidth="5"
-                        strokeDasharray={`${2*Math.PI*34*(latestRec.confidence_score)} ${2*Math.PI*34*(1 - latestRec.confidence_score)}`}
-                        strokeDashoffset={2*Math.PI*34*0.25}
-                        strokeLinecap="round"/>
-                    </svg>
-                    <span className="rp-conf-pct">{Math.round(latestRec.confidence_score * 100)}%</span>
-                  </div>
-                  <span className="rp-conf-lbl">Confidence</span>
                 </div>
               </div>
 
               {latestRec.prediction && (
                 <div className="rp-feat-metrics">
                   {[
-                    { icon:'💧', val:`${latestRec.prediction.water_saving_percent}%`, lbl:'Water Saved', bg:'#e8f4fd' },
-                    { icon:'🌾', val:`${latestRec.prediction.expected_yield_ton_per_ha} t/ha`, lbl:'Expected Yield', bg:'#f0f7ec' },
-                    { icon:'🌍', val:`-${latestRec.prediction.net_gwp_reduction_percent}%`, lbl:'Net GWP Reduction', bg:'#faf3e8' },
-                    { icon:'⚙️', val: latestRec.engine_type, lbl:'Engine Model', bg:'#f5f0fa' },
+                    { icon:'💧', val:`${latestRec.prediction.water_saving_percent}%`, lbl:'Water Saved' },
+                    { icon:'🌾', val:`${latestRec.prediction.expected_yield_ton_per_ha} t/ha`, lbl:'Expected Yield' },
+                    { icon:'🌍', val:`-${latestRec.prediction.net_gwp_reduction_percent}%`, lbl:'Net GWP Reduction' },
                   ].map(m => (
-                    <div key={m.lbl} className="rp-feat-metric" style={{ background: m.bg }}>
+                    <div key={m.lbl} className="rp-feat-metric" style={{ background: '#fff', borderColor: '#E8E2D9' }}>
                       <div className="rp-fm-icon">{m.icon}</div>
                       <div className="rp-fm-val">{m.val}</div>
                       <div className="rp-fm-lbl">{m.lbl}</div>
@@ -426,16 +392,12 @@ export default function RecommendationsPage() {
               <div className="rp-section">
                 <h3 className="rp-section-title">Recommendation History</h3>
                 <div className="rp-rec-list">
-                  {previousRecs.map(rec => {
-                    const us = urgencyStyle(rec.urgency);
+                  {(showAllHistory ? previousRecs : previousRecs.slice(0, 3)).map(rec => {
+                    const dateObj = new Date(rec.created_at || new Date());
                     return (
-                      <div key={rec.id} className="rp-rec-item" style={{ background: us.bg, borderColor: us.border }}>
+                      <div key={rec.id} className="rp-rec-item" style={{ background: '#fff', borderColor: '#E8E2D9' }}>
                         <div className="rp-rec-left">
-                          <div className="rp-rec-urgency-pill" style={{ background: us.pillBg, color: us.pill }}>
-                            {rec.urgency === 'high' ? <AlertCircle size={12}/> : rec.urgency === 'medium' ? <Clock size={12}/> : <CheckCircle size={12}/>}
-                            {rec.urgency}
-                          </div>
-                          <h4 className="rp-rec-title">{rec.recommended_strategy_display}</h4>
+                          <h4 className="rp-rec-title" style={{ marginTop: 0 }}>{rec.recommended_strategy_display}</h4>
                           <p className="rp-rec-desc">{rec.description}</p>
                           <div className="rp-rec-metrics">
                             {rec.metrics.map((m: string) => <span key={m} className="rp-rec-metric-tag">{m}</span>)}
@@ -449,6 +411,26 @@ export default function RecommendationsPage() {
                     );
                   })}
                 </div>
+                {previousRecs.length > 3 && (
+                  <button
+                    onClick={() => setShowAllHistory(v => !v)}
+                    style={{
+                      alignSelf: 'center',
+                      background: '#fff',
+                      border: '1px solid #E8E2D9',
+                      borderRadius: '999px',
+                      padding: '0.5rem 1.5rem',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: '#14532D',
+                      cursor: 'pointer',
+                      marginTop: '1rem',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {showAllHistory ? 'Hide History' : `View ${previousRecs.length - 3} More`}
+                  </button>
+                )}
               </div>
             )}
           </>
@@ -457,7 +439,7 @@ export default function RecommendationsPage() {
             <SparklesIcon />
             <h3 style={{ margin: '1rem 0 0.5rem', fontWeight: 700 }}>No recommendations yet</h3>
             <p style={{ color: '#787878', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Please click the "Run AI Engine" button above to generate your first irrigation recommendation.
+              Please click the &quot;Agrivo Hybrid AI Engine&quot; button above to generate your first irrigation recommendation.
             </p>
           </div>
         )}
@@ -501,8 +483,8 @@ export default function RecommendationsPage() {
         .rp-conf-circle { position: relative; }
         .rp-conf-pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1rem; font-weight: 800; color: #14532D; }
         .rp-conf-lbl { font-size: .65rem; color: #a09589; font-weight: 600; }
-        .rp-feat-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-        .rp-feat-metric { border-radius: 16px; padding: 1.25rem; text-align: center; border: 1px solid rgba(0,0,0,0.04); }
+        .rp-feat-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .rp-feat-metric { border-radius: 16px; padding: 1.25rem; text-align: center; border: 1px solid #E8E2D9; }
         .rp-fm-icon { font-size: 1.4rem; margin-bottom: .4rem; }
         .rp-fm-val { font-size: 1.3rem; font-weight: 800; color: #161616; }
         .rp-fm-lbl { font-size: .68rem; color: #787878; margin-top: .2rem; }

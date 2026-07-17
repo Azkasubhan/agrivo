@@ -1,7 +1,7 @@
 """Explanation generator for the AGRIVO AI Engine.
 
 Assembles human-readable, structured explanations from rule engine outputs
-and ML model decisions. All text is in Bahasa Indonesia.
+and ML model decisions. All text is in English.
 """
 
 from app.ai_engine.schemas import (
@@ -21,145 +21,139 @@ from app.ai_engine.schemas import (
 # ---------------------------------------------------------------------------
 
 _STRATEGY_NAMES: dict[str, str] = {
-    "CONTINUOUS_FLOODING":          "Penggenangan Terus-Menerus",
-    "CONTINUOUS_FLOODING_MODIFIED": "Penggenangan Termodifikasi",
-    "AWD_MILD":                     "AWD Ringan",
-    "AWD_STRICT":                   "AWD Ketat",
-    "DELAYED_IRRIGATION":           "Irigasi Tertunda",
-    "PARTIAL_IRRIGATION":           "Irigasi Parsial",
+    "CONTINUOUS_FLOODING":          "Continuous Flooding",
+    "CONTINUOUS_FLOODING_MODIFIED": "Modified Continuous Flooding",
+    "AWD_MILD":                     "Mild AWD",
+    "AWD_STRICT":                   "Strict AWD",
+    "DELAYED_IRRIGATION":           "Delayed Irrigation",
+    "PARTIAL_IRRIGATION":           "Partial Irrigation",
 }
 
 _STAGE_LABELS: dict[str, str] = {
-    "LAND_PREPARATION": "persiapan lahan",
-    "VEGETATIVE":       "vegetatif (pertumbuhan anakan)",
-    "REPRODUCTIVE":     "reproduktif (pembungaan)",
-    "RIPENING":         "pematangan menjelang panen",
+    "LAND_PREPARATION": "land preparation",
+    "VEGETATIVE":       "vegetative (tillering)",
+    "REPRODUCTIVE":     "reproductive (flowering)",
+    "RIPENING":         "ripening (pre-harvest)",
 }
 
 _SOIL_LABELS: dict[str, str] = {
-    "SANDY": "tanah berpasir (drainase cepat)",
-    "LOAM":  "tanah lempung (drainase seimbang)",
-    "CLAY":  "tanah liat (retensi air tinggi)",
-    "SILTY": "tanah lanau (retensi air tinggi)",
+    "SANDY": "sandy soil (fast drainage)",
+    "LOAM":  "loamy soil (balanced drainage)",
+    "CLAY":  "clay soil (high water retention)",
+    "SILTY": "silty soil (high water retention)",
 }
 
 _WB_LABELS: dict[str, str] = {
-    "SURPLUS": "surplus air (tanah cenderung basah)",
-    "NORMAL":  "kelembapan normal",
-    "DEFICIT": "defisit air (tanah cenderung kering)",
+    "SURPLUS": "surplus soil moisture (wet)",
+    "NORMAL":  "normal soil moisture",
+    "DEFICIT": "deficit soil moisture (dry)",
 }
 
 _RISK_LABELS: dict[str, str] = {
-    "DROUGHT_HIGH":     "risiko kekeringan tinggi dalam 14 hari ke depan",
-    "DROUGHT_MODERATE": "risiko kekeringan sedang dalam 14 hari ke depan",
-    "NORMAL":           "cuaca normal (tanpa risiko ekstrem)",
-    "EXCESS_HIGH":      "risiko hujan berlebih dalam 14 hari ke depan",
+    "DROUGHT_HIGH":     "high drought risk in the next 14 days",
+    "DROUGHT_MODERATE": "moderate drought risk in the next 14 days",
+    "NORMAL":           "normal weather risk",
+    "EXCESS_HIGH":      "high rainfall risk in the next 14 days",
 }
 
 _FEATURE_LABELS: dict[str, str] = {
-    "soil_type":              "jenis tanah",
-    "growth_stage":           "fase pertumbuhan padi",
-    "water_balance_index":    "kondisi kelembapan tanah",
-    "weather_risk_index":     "risiko cuaca 14 hari ke depan",
-    "irrigation_system_type": "jenis sistem irigasi",
-    "rice_variety_code":      "varietas padi",
-    "is_weather_estimated":   "ketersediaan data cuaca",
+    "soil_type":              "soil type",
+    "growth_stage":           "crop growth stage",
+    "water_balance_index":    "soil water balance",
+    "weather_risk_index":     "14-day weather risk",
+    "irrigation_system_type": "irrigation system type",
+    "rice_variety_code":      "rice variety",
+    "is_weather_estimated":   "weather data availability",
 }
 
 # Benefits per strategy
 _BENEFITS: dict[str, list[str]] = {
     "CONTINUOUS_FLOODING": [
-        "Menyediakan genangan stabil yang dibutuhkan padi pada fase kritis",
-        "Mudah dipantau dan diterapkan tanpa peralatan khusus",
+        "Provides the stable flooding required by rice during critical stages",
+        "Easy to monitor and implement without specialized equipment",
     ],
     "CONTINUOUS_FLOODING_MODIFIED": [
-        "Menghemat air sekitar 10% dibanding penggenangan penuh",
-        "Mengurangi emisi metana ~15% tanpa risiko tekanan air pada tanaman",
-        "Mudah diterapkan tanpa perubahan besar pada kebiasaan irigasi",
+        "Saves approximately 10% water compared to full flooding",
+        "Reduces methane emissions by ~15% with zero water-stress risk",
+        "Easy to adopt with minimal changes to traditional practices",
     ],
     "AWD_MILD": [
-        "Menghemat air sekitar 22% dibanding Continuous Flooding",
-        "Mengurangi emisi metana ~35% dengan dampak positif pada net GWP",
-        "Meningkatkan aerasi akar sehingga sering memperbaiki kualitas hasil panen",
+        "Saves approximately 22% water compared to Continuous Flooding",
+        "Reduces methane emissions by ~35% with positive net GWP impact",
+        "Enhances root aeration, often improving crop yield quality",
     ],
     "AWD_STRICT": [
-        "Menghemat air maksimal sekitar 35% dibanding Continuous Flooding",
-        "Mengurangi emisi metana ~50% — dampak lingkungan terbesar dari semua strategi",
-        "Efektif pada kondisi tanah dan sistem irigasi yang mendukung kontrol ketat",
+        "Maximizes water savings by ~35% compared to Continuous Flooding",
+        "Reduces methane emissions by ~50% — highest environmental benefit",
+        "Highly effective in soils and systems supporting precise water control",
     ],
     "DELAYED_IRRIGATION": [
-        "Mendorong perkembangan akar lebih dalam sebelum genangan",
-        "Menghemat air tahap awal tanam ~8%",
-        "Membantu mengurangi kebutuhan irigasi di awal musim tanam",
+        "Promotes deeper root development before initial flooding",
+        "Saves around 8% water during the early crop establishment stage",
+        "Reduces water demand during initial crop stages",
     ],
     "PARTIAL_IRRIGATION": [
-        "Menghemat air sekitar 18% melalui pemberian air terjadwal",
-        "Mengurangi emisi metana ~20% tanpa siklus kering-basah penuh",
-        "Memberikan kontrol volume yang lebih presisi dibanding genangan penuh",
+        "Saves approximately 18% water via scheduled partial applications",
+        "Reduces methane emissions by ~20% without full drying cycles",
+        "Enables precise volume control compared to continuous flooding",
     ],
 }
 
 # Trade-offs per strategy
 _TRADEOFFS: dict[str, list[str]] = {
     "CONTINUOUS_FLOODING": [
-        "Konsumsi air paling tinggi dari semua strategi",
-        "Emisi metana paling besar karena kondisi anaerobik terus-menerus",
+        "Highest water footprint among all strategies",
+        "Highest methane footprint due to prolonged anaerobic conditions",
     ],
     "CONTINUOUS_FLOODING_MODIFIED": [
-        "Penghematan air lebih terbatas dibanding AWD",
-        "Emisi N2O sedikit meningkat (~2%), namun net GWP tetap positif",
+        "Limited water savings compared to AWD strategies",
+        "Slightly increases N2O emissions (~2%), though net GWP remains positive",
     ],
     "AWD_MILD": [
-        "Emisi N2O meningkat sekitar 8% — namun net GWP tetap positif karena penurunan CH4 dominan",
-        "Memerlukan pemantauan rutin agar re-irigasi dilakukan tepat waktu",
+        "N2O emissions rise by ~8% — net GWP remains positive due to dominant CH4 reduction",
+        "Requires monitoring to ensure timely re-irrigation",
     ],
     "AWD_STRICT": [
-        "Emisi N2O meningkat sekitar 14% — net GWP tetap positif namun margin lebih tipis",
-        "Risiko penurunan hasil panen ~2% jika timing re-irigasi terlambat",
-        "Memerlukan kontrol air yang andal dan pemantauan intensif",
+        "Increases N2O emissions by ~14% — narrowing the net GWP benefit margin",
+        "Carries a ~2% yield loss risk if re-irrigation timing is delayed",
+        "Requires reliable water infrastructure and close monitoring",
     ],
     "DELAYED_IRRIGATION": [
-        "Sedikit menekan pertumbuhan awal tanaman (~-1% estimasi hasil)",
-        "Hanya efektif pada fase persiapan lahan — tidak bisa diterapkan di fase lain",
+        "May slightly suppress initial vegetative growth (~-1% yield impact)",
+        "Only applicable during crop establishment",
     ],
     "PARTIAL_IRRIGATION": [
-        "Estimasi hasil sedikit lebih rendah (~-4%) karena volume air terbatas",
-        "Emisi N2O meningkat ~5%, namun net GWP tetap lebih baik dari Continuous Flooding",
-        "Memerlukan pemantauan kondisi tanaman lebih sering",
+        "Slightly lower expected yield (~-4%) due to deficit volume",
+        "N2O increases by ~5%, but net GWP is superior to Continuous Flooding",
+        "Requires more frequent monitoring of crop health",
     ],
 }
 
 # How to implement per strategy
 _HOW_TO: dict[str, str] = {
     "CONTINUOUS_FLOODING": (
-        "Pertahankan ketinggian air 5–10 cm di atas permukaan tanah secara konsisten. "
-        "Periksa debit air masuk/keluar setiap hari dan pastikan tidak ada kebocoran di pematang."
+        "Maintain a consistent water depth of 5–10 cm above the soil surface. "
+        "Monitor inflow/outflow daily and prevent bund leaks."
     ),
     "CONTINUOUS_FLOODING_MODIFIED": (
-        "Pertahankan genangan dangkal 2–5 cm. Izinkan lahan mengering sebentar (1–2 hari) "
-        "bila kondisi cuaca mendukung, lalu irigasi kembali. "
-        "Hindari pengeringan total — tanah harus tetap lembap."
+        "Maintain a shallow water depth of 2–5 cm. Allow the field to dry briefly (1–2 days) "
+        "under clear weather, then re-irrigate. Do not allow soil to crack."
     ),
     "AWD_MILD": (
-        "Biarkan muka air turun hingga sekitar 15 cm di bawah permukaan tanah (gunakan pipa "
-        "perforated atau tongkat ukur sederhana), lalu irigasi ulang. "
-        "Jangan terapkan AWD saat fase reproduktif (pembungaan). "
-        "Rekam jadwal pengeringan dan re-irigasi untuk evaluasi."
+        "Allow the water level to drop to 15 cm below the soil surface (using a simple "
+        "perforated field pipe), then re-irrigate to 5 cm. Suspend AWD during flowering stage."
     ),
     "AWD_STRICT": (
-        "Biarkan muka air turun hingga 30 cm atau lebih di bawah permukaan tanah sebelum "
-        "irigasi ulang. Pantau kondisi tanaman setiap hari — hentikan pengeringan segera "
-        "bila tanaman menunjukkan tanda layu. Pastikan sumber air tersedia untuk re-irigasi cepat."
+        "Allow the water level to drop to 30 cm below the soil surface before re-irrigating. "
+        "Stop drying immediately if crops show temporary wilting signs. Ensure supply is available for rapid re-irrigation."
     ),
     "DELAYED_IRRIGATION": (
-        "Tunda pemberian air pertama selama 7–14 hari setelah tanam pindah atau sebar. "
-        "Biarkan akar berkembang lebih dalam sebelum digenangi. "
-        "Pantau kelembapan tanah dan mulai irigasi saat tanaman mulai menunjukkan tekanan ringan."
+        "Delay the first flush of irrigation for 7–14 days after transplanting or direct seeding "
+        "to encourage deep root establishment. Begin regular schedule if severe wilting occurs."
     ),
     "PARTIAL_IRRIGATION": (
-        "Berikan air dalam volume terbatas sesuai jadwal (bukan hingga tergenang penuh). "
-        "Pantau kondisi tanaman dan kelembapan tanah setiap 2–3 hari. "
-        "Tingkatkan volume bila tanaman menunjukkan tanda kekurangan air."
+        "Apply water in limited volumes on a set schedule instead of complete flooding. "
+        "Increase supply if crops show moisture stress."
     ),
 }
 
@@ -180,31 +174,31 @@ def _build_governance_note(
         return None
 
     system_label = (
-        "sistem irigasi gravitasi bersama (komunal)"
+        "communal gravity irrigation system"
         if irrigation_system_type == IrrigationSystemTypeEnum.COMMUNAL_GRAVITY
-        else "sistem irigasi semi-teknis"
+        else "semi-technical irrigation system"
     )
 
     if strategy in ("AWD_MILD", "AWD_STRICT"):
         return (
-            f"Lahan Anda menggunakan {system_label}. Strategi ini memerlukan koordinasi jadwal "
-            "pengeringan dengan petani di petak tetangga agar aliran air bersama tidak terganggu. "
-            "Diskusikan rencana pengeringan dengan kelompok tani atau P3A sebelum memulai."
+            f"Your field uses a {system_label}. This strategy requires coordinating drying schedules "
+            "with neighboring farmers to avoid disrupting communal flows. "
+            "Discuss your plan with the water users association (P3A) first."
         )
     elif strategy == "PARTIAL_IRRIGATION":
         return (
-            f"Lahan Anda menggunakan {system_label}. Pastikan jadwal pemberian air parsial "
-            "tidak mengurangi jatah air untuk petani lain di blok yang sama."
+            f"Your field uses a {system_label}. Please ensure your scheduled partial water "
+            "applications do not reduce water availability for other farmers in the same block."
         )
     elif strategy == "DELAYED_IRRIGATION":
         return (
-            f"Lahan Anda menggunakan {system_label}. Koordinasikan waktu penundaan irigasi "
-            "dengan pengelola saluran agar pasokan air tersedia saat Anda membutuhkannya."
+            f"Your field uses a {system_label}. Coordinate the irrigation delay period "
+            "with canal managers to ensure supply is available when you resume."
         )
-    # CFM and CF in communal/semi-technical: still add a light coordination note
+    # CFM and CF in communal/semi-technical
     return (
-        f"Lahan Anda menggunakan {system_label}. Pastikan jadwal irigasi Anda selaras "
-        "dengan giliran air yang ditetapkan kelompok tani atau P3A di area Anda."
+        f"Your field uses a {system_label}. Ensure your irrigation timing aligns "
+        "with the rotation schedule set by your local water users association."
     )
 
 
@@ -229,14 +223,14 @@ def _build_why(
 
     n_candidates = len(candidates_considered)
     candidates_str = (
-        f"Dari {n_candidates} strategi yang memenuhi syarat ilmiah untuk kondisi ini, "
+        f"Out of {n_candidates} scientifically matching strategies for this state, "
         if n_candidates > 1
-        else "Hanya satu strategi yang memenuhi syarat ilmiah untuk kondisi ini — "
+        else "Only one strategy scientifically matches this state — "
     )
 
     return (
-        f"{candidates_str}{name} dipilih sebagai rekomendasi terbaik. "
-        f"Kondisi lahan: {soil}, fase {stage}, kelembapan tanah {wb}, dengan {risk}."
+        f"{candidates_str}{name} is chosen as the optimal recommendation. "
+        f"Field conditions: {soil}, {stage} stage, {wb}, with {risk}."
     )
 
 

@@ -72,8 +72,8 @@ def _apply_layer2(
     if soil_type == SoilTypeEnum.SANDY and _AWD_STRICT in candidates:
         candidates.discard(_AWD_STRICT)
         excluded_reasons.append(
-            "AWD Ketat dikecualikan: tanah berpasir memiliki perkolasi cepat sehingga penurunan "
-            "muka air sulit dikendalikan dan berisiko melampaui batas toleransi tanaman."
+            "Strict AWD excluded: sandy soils have high percolation rates, making water level drops "
+            "difficult to control and risking crop water stress."
         )
 
     # R6 — Clay + SURPLUS water balance: exclude AWD_STRICT
@@ -84,8 +84,8 @@ def _apply_layer2(
     ):
         candidates.discard(_AWD_STRICT)
         excluded_reasons.append(
-            "AWD Ketat dikecualikan: tanah liat dengan surplus air sudah memiliki retensi tinggi — "
-            "pengeringan agresif berisiko meretakkan tanah dan merusak struktur akar."
+            "Strict AWD excluded: clay soils with surplus water have high moisture retention; "
+            "aggressive drying risks cracking the soil and damaging root structures."
         )
 
     # R7 — DROUGHT_HIGH + non-technical water source: exclude CF and AWD_STRICT
@@ -102,8 +102,8 @@ def _apply_layer2(
         candidates -= removed
         if removed:
             excluded_reasons.append(
-                "Penggenangan penuh dan AWD Ketat dikecualikan: risiko kekeringan tinggi tanpa "
-                "jaminan sumber air teknis membuat strategi ini tidak realistis diterapkan."
+                "Continuous Flooding and Strict AWD excluded: high drought risk without a guaranteed "
+                "technical water source makes these strategies unrealistic."
             )
 
     # R8 — EXCESS_HIGH: exclude DELAYED and PARTIAL
@@ -112,8 +112,8 @@ def _apply_layer2(
         candidates -= removed
         if removed:
             excluded_reasons.append(
-                "Irigasi Tertunda dan Irigasi Parsial dikecualikan: saat curah hujan berlebih "
-                "fokus seharusnya pada kapasitas drainase, bukan pengurangan pemberian air."
+                "Delayed and Partial Irrigation excluded: under excess rainfall, focus must be on "
+                "drainage capacity rather than irrigation reductions."
             )
 
     # R9 — RAINFED: exclude AWD_STRICT in all conditions
@@ -122,10 +122,10 @@ def _apply_layer2(
         and _AWD_STRICT in candidates
     ):
         candidates.discard(_AWD_STRICT)
-        if "AWD Ketat dikecualikan: tanah berpasir" not in "\n".join(excluded_reasons):
+        if "Strict AWD excluded: sandy soils" not in "\n".join(excluded_reasons):
             excluded_reasons.append(
-                "AWD Ketat dikecualikan: tanpa sumber irigasi buatan, tidak ada jaminan "
-                "re-flooding tepat waktu setelah pengeringan agresif."
+                "Strict AWD excluded: without artificial irrigation source, there is no guarantee "
+                "of timely re-flooding after aggressive drying cycles."
             )
 
     return candidates, excluded_reasons
@@ -158,21 +158,21 @@ def get_valid_candidates(
     all_excluded_l1 = _ALL_STRATEGIES - layer1_candidates
     _stage_exclusion_msgs: dict[GrowthStage, str] = {
         GrowthStage.LAND_PREPARATION: (
-            "AWD dan Irigasi Parsial dikecualikan pada fase persiapan lahan: "
-            "lahan butuh genangan awal untuk pelumpuran dan saturasi tanah."
+            "AWD and Partial Irrigation excluded during land preparation: "
+            "fields require initial flooding for soil saturation and puddling."
         ),
         GrowthStage.VEGETATIVE: (
-            "Irigasi Tertunda dikecualikan pada fase vegetatif: "
-            "strategi ini hanya relevan pada fase persiapan lahan."
+            "Delayed Irrigation excluded during vegetative phase: "
+            "this strategy is only relevant during land preparation."
         ),
         GrowthStage.REPRODUCTIVE: (
-            "AWD (ringan maupun ketat) dan Irigasi Parsial dikecualikan pada fase reproduktif: "
-            "fase ini sangat sensitif terhadap defisit air — genangan stabil wajib dipertahankan "
-            "untuk mencegah gagal panen akibat kekeringan saat pembungaan."
+            "AWD (both mild and strict) and Partial Irrigation excluded during reproductive phase: "
+            "this stage is highly sensitive to water deficits — stable flooding must be maintained "
+            "to prevent sterility."
         ),
         GrowthStage.RIPENING: (
-            "Penggenangan Terus-Menerus (CF) dan Irigasi Tertunda dikecualikan pada fase pematangan: "
-            "fase ini toleran kekeringan dan pengeringan lahan dianjurkan untuk memudahkan panen."
+            "Continuous Flooding (CF) and Delayed Irrigation excluded during ripening phase: "
+            "fields are highly drought-tolerant, and drying is recommended to facilitate harvesting."
         ),
     }
     if all_excluded_l1 and growth_stage in _stage_exclusion_msgs:
@@ -188,8 +188,8 @@ def get_valid_candidates(
         # Extreme edge case — fall back to safest strategy
         candidates = {_CFM}
         all_reasons.append(
-            "Semua strategi dikecualikan oleh constraint — sistem menggunakan "
-            "Penggenangan Termodifikasi sebagai strategi paling aman secara default."
+            "All strategies excluded by constraints — system defaults to "
+            "Modified Continuous Flooding as the safest option."
         )
 
     # Sort by fallback priority for determinism

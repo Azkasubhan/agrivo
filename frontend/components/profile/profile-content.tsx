@@ -128,7 +128,6 @@ export function ProfileContent() {
             {[
               { label: 'Total Area', val: `${totalArea} ha`, icon: '🌾' },
               { label: 'Active Fields', val: fields.length.toString(), icon: '🗺️' },
-              { label: 'Primary Crop', val: 'Rice', icon: '🌱' },
             ].map(r => (
               <div key={r.label} className="pc-overview-item">
                 <span className="pc-overview-icon">{r.icon}</span>
@@ -148,12 +147,12 @@ export function ProfileContent() {
             <p className="pc-card-sub">Cumulative savings calculated from active irrigation runs.</p>
             <div className="pc-impact-grid">
               {[
-                { icon: '💧', val: impactStats.waterSavedL >= 1000000 ? `${(impactStats.waterSavedL / 1000000).toFixed(1)}M L` : impactStats.waterSavedL >= 1000 ? `${(impactStats.waterSavedL / 1000).toFixed(1)}k L` : `${impactStats.waterSavedL} L`, label: 'Water Saved', color: '#e8f4fd' },
-                { icon: '🌍', val: impactStats.co2AvoidedKg >= 1000 ? `−${(impactStats.co2AvoidedKg / 1000).toFixed(1)} t` : `−${impactStats.co2AvoidedKg} kg`, label: 'CO₂-eq Avoided', color: '#f0f7ec' },
-                { icon: '🌾', val: impactStats.bestYield > 0 ? `${impactStats.bestYield.toFixed(1)} t/ha` : '−', label: 'Best Yield', color: '#faf3e8' },
-                { icon: '📅', val: impactStats.totalRecommendations.toString(), label: 'Recommendations Generated', color: '#f5f0fa' },
+                { icon: '💧', val: impactStats.waterSavedL >= 1000000 ? `${(impactStats.waterSavedL / 1000000).toFixed(1)}M L` : impactStats.waterSavedL >= 1000 ? `${(impactStats.waterSavedL / 1000).toFixed(1)}k L` : `${impactStats.waterSavedL} L`, label: 'Water Saved' },
+                { icon: '🌍', val: impactStats.co2AvoidedKg >= 1000 ? `−${(impactStats.co2AvoidedKg / 1000).toFixed(1)} t` : `−${impactStats.co2AvoidedKg} kg`, label: 'CO₂-eq Avoided' },
+                { icon: '🌾', val: impactStats.bestYield > 0 ? `${impactStats.bestYield.toFixed(1)} t/ha` : '−', label: 'Best Yield' },
+                { icon: '📅', val: impactStats.totalRecommendations.toString(), label: 'Recommendations Generated' },
               ].map(m => (
-                <div key={m.label} className="pc-impact-card" style={{ background: m.color }}>
+                <div key={m.label} className="pc-impact-card">
                   <div className="pc-imp-icon">{m.icon}</div>
                   <div className="pc-imp-val">{m.val}</div>
                   <div className="pc-imp-lbl">{m.label}</div>
@@ -192,7 +191,7 @@ export function ProfileContent() {
  
         .pc-overview-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(2, 1fr);
           gap: 1.5rem;
         }
         .pc-overview-item {
@@ -223,7 +222,7 @@ export function ProfileContent() {
         }
  
         .pc-impact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-        .pc-impact-card { border-radius: 14px; padding: 1.25rem; border: 1px solid rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: .3rem; }
+        .pc-impact-card { background: #fff; border-radius: 14px; padding: 1.25rem; border: 1px solid #E8E2D9; display: flex; flex-direction: column; gap: .3rem; }
         .pc-imp-icon { font-size: 1.4rem; margin-bottom: .25rem; }
         .pc-imp-val { font-size: 1.4rem; font-weight: 800; color: #161616; }
         .pc-imp-lbl { font-size: .68rem; color: #787878; font-weight: 500; }
