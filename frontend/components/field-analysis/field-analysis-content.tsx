@@ -264,7 +264,6 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                 />
                 <div className="fa-detail-img-overlay" />
                 <div className="fa-detail-img-label">
-                  <span className="fa-crop-badge">{selectedField.crop}</span>
                   <span className="fa-area-badge">{selectedField.area} ha</span>
                 </div>
               </div>
@@ -325,7 +324,6 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                   fill
                   className="fa-landscape-img"
                 />
-                <span className="fa-landscape-crop-badge">{field.crop}</span>
               </div>
               <div className="fa-landscape-info">
                 <div className="fa-landscape-meta">

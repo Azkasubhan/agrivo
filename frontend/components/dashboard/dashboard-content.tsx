@@ -272,7 +272,6 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
                 <div className="db-field-img-wrap">
                   <Image src="/rice-field-editorial.png" alt={field.name} fill className="db-field-img" />
                   <div className="db-field-img-overlay" />
-                  <div className="db-field-crop-badge">{field.crop}</div>
                 </div>
                 <div className="db-field-body">
                   <div className="db-field-name">{field.name}</div>
