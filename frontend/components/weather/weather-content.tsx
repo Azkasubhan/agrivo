@@ -123,9 +123,9 @@ export function WeatherContent({ weather }: Props) {
               </div>
               <div className="wc-day-icon"><WeatherIcon condition={d.condition} size={28} /></div>
               <div className="wc-day-temp">{d.temperature}°</div>
-              <div className="wc-day-hum">{d.humidity}%</div>
+              <div className="wc-day-hum">💧 {d.humidity}%</div>
               {d.precipitation > 0 && (
-                <div className="wc-day-rain">{d.precipitation}mm</div>
+                <div className="wc-day-rain">🌧️ {d.precipitation}mm</div>
               )}
             </div>
           ))}
@@ -152,7 +152,7 @@ export function WeatherContent({ weather }: Props) {
                     background: skip ? '#fde8e5' : reduce ? '#fdf0d0' : '#e8f5ee',
                   }}
                 >
-                  {skip ? 'Skip' : reduce ? 'Reduce' : 'Proceed'}
+                  {skip ? '⛔ Skip' : reduce ? '⬇️ Reduce' : '✅ Proceed'}
                 </div>
                 {d.precipitation > 0 && (
                   <div className="wc-impact-rain">{d.precipitation}mm rain</div>
