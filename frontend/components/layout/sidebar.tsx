@@ -10,7 +10,6 @@ import { clearAuthToken } from '@/lib/api-client';
 const routes = [
   { href: '/dashboard', label: 'Dashboard', icon: BarChart3, sub: 'Overview & metrics' },
   { href: '/recommendations', label: 'Recommendations', icon: Lightbulb, sub: 'AI irrigation advice' },
-  { href: '/predict', label: 'AI Predictor', icon: Sparkles, sub: 'Generate irrigation strategy' },
   { href: '/field-analysis', label: 'Field Analysis', icon: Leaf, sub: 'Soil & crop data' },
   { href: '/weather', label: 'Weather', icon: Cloud, sub: '7-day forecast' },
   { href: '/profile', label: 'Profile', icon: User, sub: 'Account settings' },

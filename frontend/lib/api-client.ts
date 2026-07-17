@@ -60,7 +60,8 @@ export async function apiClient<T>(
       }
     }
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'An error occurred while fetching data');
+    const message = errorData.detail || `Error ${response.status}: ${response.statusText || 'An error occurred while fetching data'}`;
+    throw new Error(message);
   }
 
   return response.json();
