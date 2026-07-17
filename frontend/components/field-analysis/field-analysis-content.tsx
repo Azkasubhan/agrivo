@@ -70,6 +70,7 @@ interface Props {
 
 export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedField, setSelectedField] = useState<Field | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [errors, setErrors] = useState<{
@@ -235,38 +236,45 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         ))}
       </div>
 
-      {/* Field cards - editorial large format */}
-      <div className="fa-fields">
-        {fields.map((field, i) => (
-          <div key={field.id} className={`fa-field-card${i % 2 === 1 ? ' reverse' : ''}`}>
-            <div className="fa-field-img-wrap">
-              <Image
-                src={i % 3 === 0 ? '/rice-field-editorial.png' : i % 3 === 1 ? '/rice-terraces-hero.png' : '/rice-harvest-golden.png'}
-                alt={field.name}
-                fill
-                className="fa-field-img"
-              />
-              <div className="fa-field-img-overlay" />
-              <div className="fa-field-img-label">
-                <span className="fa-crop-badge">{field.crop}</span>
-                <span className="fa-area-badge">{field.area} ha</span>
+      {selectedField ? (
+        <div className="fa-detail-view animate-scale-in">
+          <button className="fa-back-btn" onClick={() => setSelectedField(null)}>
+            &larr; Back to Fields
+          </button>
+          
+          <div className="fa-detail-layout">
+            <div className="fa-detail-sidebar">
+              <div className="fa-detail-img-wrap">
+                <Image
+                  src="/rice-field-editorial.png"
+                  alt={selectedField.name}
+                  fill
+                  className="fa-detail-img"
+                  priority
+                />
+                <div className="fa-detail-img-overlay" />
+                <div className="fa-detail-img-label">
+                  <span className="fa-crop-badge">{selectedField.crop}</span>
+                  <span className="fa-area-badge">{selectedField.area} ha</span>
+                </div>
               </div>
             </div>
-            <div className="fa-field-info">
-              <div className="fa-field-info-eyebrow">{field.location}</div>
-              <h2 className="fa-field-name">{field.name}</h2>
-              <p className="fa-field-soil">Soil type: {field.soilType}</p>
+            
+            <div className="fa-detail-info">
+              <div className="fa-detail-eyebrow">{selectedField.location}</div>
+              <h1 className="fa-detail-title">{selectedField.name}</h1>
+              <p className="fa-detail-soil">Soil type: {selectedField.soilType}</p>
 
               {/* Moisture bar */}
               <div className="fa-moisture-section">
                 <div className="fa-moisture-header">
                   <span className="fa-moisture-label">Soil Moisture</span>
-                  <span className="fa-moisture-val" style={{ color: field.moisture < 60 ? '#C0392B' : '#14532D' }}>{field.moisture}%</span>
+                  <span className="fa-moisture-val" style={{ color: selectedField.moisture < 60 ? '#C0392B' : '#14532D' }}>{selectedField.moisture}%</span>
                 </div>
                 <div className="fa-moisture-bar-bg">
                   <div className="fa-moisture-bar" style={{
-                    width: `${field.moisture}%`,
-                    background: field.moisture < 60 ? '#C0392B' : field.moisture > 80 ? '#2563EB' : '#14532D'
+                    width: `${selectedField.moisture}%`,
+                    background: selectedField.moisture < 60 ? '#C0392B' : selectedField.moisture > 80 ? '#2563EB' : '#14532D'
                   }} />
                 </div>
                 <div className="fa-moisture-scale">
@@ -277,11 +285,11 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
               {/* Nutrient grid */}
               <div className="fa-nutrient-grid">
                 {[
-                  { label: 'pH Level', val: field.ph, unit: '', ideal: '6.0–7.0' },
-                  { label: 'Temperature', val: field.temperature, unit: '°C', ideal: '15–25°C' },
-                  { label: 'Nitrogen', val: field.nitrogen, unit: 'ppm', ideal: '40–60 ppm' },
-                  { label: 'Phosphorus', val: field.phosphorus, unit: 'ppm', ideal: '15–25 ppm' },
-                  { label: 'Potassium', val: field.potassium, unit: 'ppm', ideal: '130–180 ppm' },
+                  { label: 'pH Level', val: selectedField.ph, unit: '', ideal: '6.0–7.0' },
+                  { label: 'Temperature', val: selectedField.temperature, unit: '°C', ideal: '15–25°C' },
+                  { label: 'Nitrogen', val: selectedField.nitrogen, unit: 'ppm', ideal: '40–60 ppm' },
+                  { label: 'Phosphorus', val: selectedField.phosphorus, unit: 'ppm', ideal: '15–25 ppm' },
+                  { label: 'Potassium', val: selectedField.potassium, unit: 'ppm', ideal: '130–180 ppm' },
                 ].map(n => (
                   <div key={n.label} className="fa-nutrient-card">
                     <div className="fa-nut-label">{n.label}</div>
@@ -292,12 +300,40 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
               </div>
 
               <div className="fa-last-watered">
-                Last irrigated: {field.lastWatered.toLocaleDateString('en', { day:'numeric', month:'long', year:'numeric' })}
+                Last irrigated: {selectedField.lastWatered.toLocaleDateString('en', { day:'numeric', month:'long', year:'numeric' })}
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="fa-fields-list">
+          {fields.map((field) => (
+            <div key={field.id} className="fa-landscape-card" onClick={() => setSelectedField(field)}>
+              <div className="fa-landscape-img-wrap">
+                <Image
+                  src="/rice-field-editorial.png"
+                  alt={field.name}
+                  fill
+                  className="fa-landscape-img"
+                />
+                <span className="fa-landscape-crop-badge">{field.crop}</span>
+              </div>
+              <div className="fa-landscape-info">
+                <div className="fa-landscape-meta">
+                  <span className="fa-landscape-loc">{field.location}</span>
+                  <span className="fa-landscape-dot">•</span>
+                  <span className="fa-landscape-area">{field.area} ha</span>
+                </div>
+                <h2 className="fa-landscape-name">{field.name}</h2>
+                <div className="fa-landscape-bottom">
+                  <span className="fa-landscape-soil">Soil: {field.soilType}</span>
+                  <span className="fa-landscape-action">View Analysis &rarr;</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Field Modal */}
       {isModalOpen && (
@@ -486,21 +522,202 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         .fa-sum-val { font-size: 1.75rem; font-weight: 900; letter-spacing: -.02em; color: #161616; }
         .fa-sum-lbl { font-size: .72rem; color: #787878; margin-top: .2rem; font-weight: 500; }
 
-        .fa-fields { display: flex; flex-direction: column; gap: 3rem; }
-        .fa-field-card { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; }
-        .fa-field-card.reverse { direction: rtl; }
-        .fa-field-card.reverse > * { direction: ltr; }
-        .fa-field-img-wrap { position: relative; height: 460px; border-radius: 24px; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.12); }
-        .fa-field-img { object-fit: cover; }
-        .fa-field-img-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.45), transparent 50%); }
-        .fa-field-img-label { position: absolute; bottom: 1.25rem; left: 1.25rem; display: flex; gap: .5rem; }
+        .fa-fields-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          margin-top: 1rem;
+        }
+
+        .fa-landscape-card {
+          display: flex;
+          background: #fff;
+          border: 1px solid #E8E2D9;
+          border-radius: 16px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .fa-landscape-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 20px -8px rgba(20, 83, 45, 0.08);
+          border-color: #5A6F45;
+        }
+
+        .fa-landscape-img-wrap {
+          position: relative;
+          width: 240px;
+          min-width: 240px;
+          height: 160px;
+          overflow: hidden;
+        }
+
+        .fa-landscape-img {
+          object-fit: cover;
+        }
+
+        .fa-landscape-crop-badge {
+          position: absolute;
+          bottom: 10px;
+          left: 10px;
+          background: #14532D;
+          color: #fff;
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 0.25rem 0.6rem;
+          border-radius: 6px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .fa-landscape-info {
+          flex: 1;
+          padding: 1.5rem 1.75rem;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+
+        .fa-landscape-meta {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.8rem;
+          color: #787878;
+          font-weight: 500;
+        }
+
+        .fa-landscape-dot {
+          color: #C2BCAE;
+        }
+
+        .fa-landscape-name {
+          font-size: 1.4rem;
+          font-weight: 700;
+          color: #14532D;
+          margin: 0.5rem 0;
+          letter-spacing: -0.01em;
+        }
+
+        .fa-landscape-bottom {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-top: 1px solid #F3EFE9;
+          padding-top: 0.75rem;
+          margin-top: 0.5rem;
+        }
+
+        .fa-landscape-soil {
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: #5A6F45;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        .fa-landscape-action {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #14532D;
+          transition: transform 0.2s;
+        }
+
+        .fa-landscape-card:hover .fa-landscape-action {
+          transform: translateX(4px);
+        }
+
+        /* Detail View Styles */
+        .fa-back-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: transparent;
+          border: none;
+          color: #5A6F45;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          padding: 0.5rem 0;
+          margin-bottom: 1.5rem;
+          transition: color 0.2s;
+        }
+
+        .fa-back-btn:hover {
+          color: #14532D;
+        }
+
+        .fa-detail-layout {
+          display: grid;
+          grid-template-columns: 360px 1fr;
+          gap: 2.5rem;
+          background: #fff;
+          border: 1px solid #E8E2D9;
+          border-radius: 20px;
+          padding: 2rem;
+        }
+
+        .fa-detail-sidebar {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fa-detail-img-wrap {
+          position: relative;
+          width: 100%;
+          height: 380px;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        .fa-detail-img {
+          object-fit: cover;
+        }
+
+        .fa-detail-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+        }
+
+        .fa-detail-img-label {
+          position: absolute;
+          bottom: 1.25rem;
+          left: 1.25rem;
+          right: 1.25rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          z-index: 1;
+        }
+
         .fa-crop-badge { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #fff; background: rgba(20,83,45,0.85); padding: .3rem .8rem; border-radius: 999px; }
         .fa-area-badge { font-size: .72rem; font-weight: 700; color: #fff; background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); padding: .3rem .8rem; border-radius: 999px; }
 
-        .fa-field-info { display: flex; flex-direction: column; gap: 1rem; }
-        .fa-field-info-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #a09589; }
-        .fa-field-name { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 800; letter-spacing: -.025em; color: #161616; margin: 0; }
-        .fa-field-soil { font-size: .85rem; color: #787878; }
+        .fa-detail-eyebrow {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #787878;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .fa-detail-title {
+          font-size: 2.2rem;
+          font-weight: 800;
+          color: #14532D;
+          margin: 0.25rem 0 0.75rem;
+          letter-spacing: -0.02em;
+        }
+
+        .fa-detail-soil {
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: #5A6F45;
+          margin-bottom: 2rem;
+        }
 
         .fa-moisture-section { background: #FAF8F3; border: 1px solid #E8E2D9; border-radius: 14px; padding: 1.25rem; }
         .fa-moisture-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
@@ -793,8 +1010,10 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
           .fa-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
           .fa-add-btn { width: 100%; justify-content: center; }
           .fa-summary-row { grid-template-columns: repeat(2, 1fr); }
-          .fa-field-card, .fa-field-card.reverse { grid-template-columns: 1fr; direction: ltr; gap: 1.5rem; }
-          .fa-field-img-wrap { height: 280px; }
+          .fa-landscape-card { flex-direction: column; }
+          .fa-landscape-img-wrap { width: 100%; height: 180px; }
+          .fa-detail-layout { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.5rem; }
+          .fa-detail-img-wrap { height: 250px; }
           .fa-nutrient-grid { grid-template-columns: repeat(2, 1fr); }
           .form-group.full-width { grid-column: span 1; }
         }
