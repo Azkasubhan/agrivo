@@ -48,27 +48,17 @@ export default function WeatherPage() {
         const data = res.data;
         setIsEstimated(data.is_estimated);
 
-        // Map today's weather
-        const today: WeatherData = {
-          date: new Date(),
-          temperature: Math.round(data.temperature_c),
-          humidity: Math.round(data.humidity_percent),
-          precipitation: parseFloat(data.precipitation_mm),
-          windSpeed: parseFloat(data.wind_speed_kmh),
-          condition: data.weather_condition,
-        };
-
-        // Map forecast
-        const forecast: WeatherData[] = data.forecast.map((f: any) => ({
+        // Use forecast array directly — index 0 is already today from Open-Meteo
+        const mapped: WeatherData[] = data.forecast.map((f: any) => ({
           date: new Date(f.date),
-          temperature: Math.round(f.temperature_mean),
-          humidity: Math.round(f.relative_humidity_mean),
-          precipitation: parseFloat(f.precipitation_sum),
-          windSpeed: parseFloat(f.wind_speed_max),
-          condition: f.weather_condition,
+          temperature: Math.round(f.temperature_mean ?? data.temperature_c),
+          humidity: Math.round(f.relative_humidity_mean ?? data.humidity_percent),
+          precipitation: parseFloat(f.precipitation_sum ?? data.precipitation_mm),
+          windSpeed: parseFloat(f.wind_speed_max ?? data.wind_speed_kmh),
+          condition: f.weather_condition ?? data.weather_condition,
         }));
 
-        setWeatherData([today, ...forecast]);
+        setWeatherData(mapped);
       } catch (err) {
         console.error('Failed to fetch weather', err);
         setError('Failed to retrieve weather data from Open-Meteo.');
