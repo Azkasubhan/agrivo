@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { WeatherContent } from '@/components/weather/weather-content';
 import { apiClient } from '@/lib/api-client';
 import { WeatherData } from '@/lib/mock-data';
+import { CustomSelect } from '@/components/ui/custom-select';
 
 export default function WeatherPage() {
   const [fields, setFields] = useState<any[]>([]);
@@ -106,26 +107,16 @@ export default function WeatherPage() {
         <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: '#a09589' }}>
           Select Field:
         </span>
-        <select
-          value={selectedFieldId}
-          onChange={(e) => setSelectedFieldId(e.target.value)}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: '10px',
-            border: '1px solid #E8E2D9',
-            background: '#fff',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            outline: 'none',
-          }}
-        >
-          {fields.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.name} ({f.field_area_ha} ha)
-            </option>
-          ))}
-        </select>
+        <div style={{ width: '260px' }}>
+          <CustomSelect
+            value={selectedFieldId}
+            onChange={setSelectedFieldId}
+            options={fields.map((f) => ({
+              value: f.id,
+              label: `${f.name} (${f.field_area_ha} ha)`,
+            }))}
+          />
+        </div>
       </div>
 
       {loadingWeather ? (

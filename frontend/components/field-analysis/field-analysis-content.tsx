@@ -5,6 +5,38 @@ import Image from 'next/image';
 import { Field } from '@/lib/mock-data';
 import { apiClient } from '@/lib/api-client';
 import { Plus, X, Loader2 } from 'lucide-react';
+import { CustomSelect } from '../ui/custom-select';
+
+const soilTypeOptions = [
+  { value: 'CLAY', label: 'Clay' },
+  { value: 'LOAM', label: 'Loam' },
+  { value: 'SANDY', label: 'Sandy' },
+  { value: 'SILTY', label: 'Silty' },
+];
+
+const riceVarietyOptions = [
+  { value: 'CIHERANG', label: 'Ciherang' },
+  { value: 'IR64', label: 'IR64' },
+  { value: 'INPARI_32', label: 'Inpari 32' },
+  { value: 'INPARI_42_AGRITAN_GSR', label: 'Inpari 42 Agritan GSR' },
+  { value: 'MEKONGGA', label: 'Mekongga' },
+];
+
+const irrigationSystemOptions = [
+  { value: 'TECHNICAL', label: 'Technical' },
+  { value: 'SEMI_TECHNICAL', label: 'Semi-Technical' },
+  { value: 'RAINFED', label: 'Rainfed' },
+  { value: 'COMMUNAL_GRAVITY', label: 'Communal Gravity' },
+];
+
+const prevIrrigationOptions = [
+  { value: 'CONTINUOUS_FLOODING', label: 'Continuous Flooding' },
+  { value: 'CONTINUOUS_FLOODING_MODIFIED', label: 'Modified Continuous Flooding' },
+  { value: 'AWD_MILD', label: 'AWD (Alternate Wetting and Drying) - Mild' },
+  { value: 'AWD_STRICT', label: 'AWD (Alternate Wetting and Drying) - Strict' },
+  { value: 'DELAYED_IRRIGATION', label: 'Delayed Irrigation' },
+  { value: 'PARTIAL_IRRIGATION', label: 'Partial Irrigation' },
+];
 
 interface Props {
   fields: Field[];
@@ -15,6 +47,12 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [errors, setErrors] = useState<{
+    name?: string;
+    area?: string;
+    latitude?: string;
+    longitude?: string;
+  }>({});
 
   // Form State
   const [name, setName] = useState('');
@@ -27,9 +65,31 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
   const [irrigationSystem, setIrrigationSystem] = useState('TECHNICAL');
   const [prevIrrigation, setPrevIrrigation] = useState('CONTINUOUS_FLOODING');
 
+  const handleAreaChange = (val: string) => {
+    if (/^\d*\.?\d*$/.test(val)) {
+      setArea(val);
+      if (errors.area) setErrors(prev => ({ ...prev, area: undefined }));
+    }
+  };
+
+  const handleLatitudeChange = (val: string) => {
+    if (/^-?\d*\.?\d*$/.test(val)) {
+      setLatitude(val);
+      if (errors.latitude) setErrors(prev => ({ ...prev, latitude: undefined }));
+    }
+  };
+
+  const handleLongitudeChange = (val: string) => {
+    if (/^\d*\.?\d*$/.test(val)) {
+      setLongitude(val);
+      if (errors.longitude) setErrors(prev => ({ ...prev, longitude: undefined }));
+    }
+  };
+
   const handleClose = () => {
     setIsModalOpen(false);
     setErrorMsg('');
+    setErrors({});
     // Reset defaults
     setName('');
     setSoilType('CLAY');
@@ -42,8 +102,34 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
     setPrevIrrigation('CONTINUOUS_FLOODING');
   };
 
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    if (!name.trim()) {
+      newErrors.name = 'Field Name is required.';
+    }
+
+    const parsedArea = parseFloat(area);
+    if (isNaN(parsedArea) || parsedArea <= 0 || parsedArea > 25) {
+      newErrors.area = 'Area must be a number between 0.01 and 25.00 Ha.';
+    }
+
+    const parsedLat = parseFloat(latitude);
+    if (isNaN(parsedLat) || parsedLat < -11.0000 || parsedLat > 6.1000) {
+      newErrors.latitude = 'Latitude must be a number between -11.0000 and 6.1000 (Indonesian coordinate range).';
+    }
+
+    const parsedLng = parseFloat(longitude);
+    if (isNaN(parsedLng) || parsedLng < 94.7000 || parsedLng > 141.1000) {
+      newErrors.longitude = 'Longitude must be a number between 94.7000 and 141.1000 (Indonesian coordinate range).';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsSubmitting(true);
     setErrorMsg('');
 
@@ -70,7 +156,7 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
       }
       handleClose();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal menambahkan lahan. Harap periksa kembali input Anda.');
+      setErrorMsg(err.message || 'Failed to add field. Please verify your input values.');
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +173,7 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         </div>
         <button className="fa-add-btn" onClick={() => setIsModalOpen(true)}>
           <Plus size={16} />
-          <span>Tambah Lahan</span>
+          <span>Add Field</span>
         </button>
       </div>
 
@@ -176,7 +262,7 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         <div className="modal-backdrop">
           <div className="modal-content animate-scale-in">
             <div className="modal-header">
-              <h2 className="modal-title">Tambah Lahan Baru</h2>
+              <h2 className="modal-title">Add New Field</h2>
               <button className="modal-close-btn" onClick={handleClose}>
                 <X size={20} />
               </button>
@@ -191,48 +277,41 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
 
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label className="form-label">Nama Lahan *</label>
+                  <label className="form-label">Field Name *</label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: Sawah Bawah Bukit, Blok C"
+                    placeholder="e.g. South Hill Field, Block C"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="form-input"
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+                    }}
+                    className={`form-input${errors.name ? ' error' : ''}`}
+                  />
+                  {errors.name && <span className="field-error-text">{errors.name}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Soil Type *</label>
+                  <CustomSelect
+                    value={soilType}
+                    onChange={setSoilType}
+                    options={soilTypeOptions}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Jenis Tanah *</label>
-                  <select
-                    value={soilType}
-                    onChange={(e) => setSoilType(e.target.value)}
-                    className="form-select"
-                  >
-                    <option value="CLAY">Clay (Liat)</option>
-                    <option value="LOAM">Loam (Lempung)</option>
-                    <option value="SANDY">Sandy (Pasir)</option>
-                    <option value="SILTY">Silty (Lanau)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Varietas Padi *</label>
-                  <select
+                  <label className="form-label">Rice Variety *</label>
+                  <CustomSelect
                     value={riceVariety}
-                    onChange={(e) => setRiceVariety(e.target.value)}
-                    className="form-select"
-                  >
-                    <option value="CIHERANG">Ciherang</option>
-                    <option value="IR64">IR64</option>
-                    <option value="INPARI_32">Inpari 32</option>
-                    <option value="INPARI_42_AGRITAN_GSR">Inpari 42 Agritan GSR</option>
-                    <option value="MEKONGGA">Mekongga</option>
-                  </select>
+                    onChange={setRiceVariety}
+                    options={riceVarietyOptions}
+                  />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Tanggal Mulai Tanam *</label>
+                  <label className="form-label">Planting Date *</label>
                   <input
                     type="date"
                     required
@@ -243,90 +322,75 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Luas Lahan (Hektar) *</label>
+                  <label className="form-label">Field Area (Hectares) *</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max="25.00"
+                    type="text"
                     required
+                    placeholder="e.g. 1.5"
                     value={area}
-                    onChange={(e) => setArea(e.target.value)}
-                    className="form-input"
+                    onChange={(e) => handleAreaChange(e.target.value)}
+                    className={`form-input${errors.area ? ' error' : ''}`}
                   />
+                  {errors.area && <span className="field-error-text">{errors.area}</span>}
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Latitude * (-11.0 s/d 6.1)</label>
+                  <label className="form-label">Latitude * (-11.0000 to 6.1000)</label>
                   <input
-                    type="number"
-                    step="0.0001"
-                    min="-11.0000"
-                    max="6.1000"
+                    type="text"
                     required
+                    placeholder="e.g. -7.7025"
                     value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    className="form-input"
+                    onChange={(e) => handleLatitudeChange(e.target.value)}
+                    className={`form-input${errors.latitude ? ' error' : ''}`}
                   />
+                  {errors.latitude && <span className="field-error-text">{errors.latitude}</span>}
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Longitude * (94.7 s/d 141.1)</label>
+                  <label className="form-label">Longitude * (94.7000 to 141.1000)</label>
                   <input
-                    type="number"
-                    step="0.0001"
-                    min="94.7000"
-                    max="141.1000"
+                    type="text"
                     required
+                    placeholder="e.g. 110.6012"
                     value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    className="form-input"
+                    onChange={(e) => handleLongitudeChange(e.target.value)}
+                    className={`form-input${errors.longitude ? ' error' : ''}`}
+                  />
+                  {errors.longitude && <span className="field-error-text">{errors.longitude}</span>}
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Irrigation System Type *</label>
+                  <CustomSelect
+                    value={irrigationSystem}
+                    onChange={setIrrigationSystem}
+                    options={irrigationSystemOptions}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Tipe Sistem Irigasi *</label>
-                  <select
-                    value={irrigationSystem}
-                    onChange={(e) => setIrrigationSystem(e.target.value)}
-                    className="form-select"
-                  >
-                    <option value="TECHNICAL">Sistem Teknis (Technical)</option>
-                    <option value="SEMI_TECHNICAL">Semi Teknis (Semi-Technical)</option>
-                    <option value="RAINFED">Tadah Hujan (Rainfed)</option>
-                    <option value="COMMUNAL_GRAVITY">Gravitasi Bersama (Communal Gravity)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Metode Irigasi Sebelumnya *</label>
-                  <select
+                  <label className="form-label">Previous Irrigation Method *</label>
+                  <CustomSelect
                     value={prevIrrigation}
-                    onChange={(e) => setPrevIrrigation(e.target.value)}
-                    className="form-select"
-                  >
-                    <option value="CONTINUOUS_FLOODING">Continuous Flooding (Penggenangan Terus-menerus)</option>
-                    <option value="CONTINUOUS_FLOODING_MODIFIED">Modified Continuous Flooding</option>
-                    <option value="AWD_MILD">AWD Mild</option>
-                    <option value="AWD_STRICT">AWD Strict</option>
-                    <option value="DELAYED_IRRIGATION">Delayed Irrigation</option>
-                    <option value="PARTIAL_IRRIGATION">Partial Irrigation</option>
-                  </select>
+                    onChange={setPrevIrrigation}
+                    options={prevIrrigationOptions}
+                  />
                 </div>
               </div>
 
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={handleClose} disabled={isSubmitting}>
-                  Batal
+                  Cancel
                 </button>
                 <button type="submit" className="btn-submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      <span>Menyimpan...</span>
+                      <span>Saving...</span>
                     </>
                   ) : (
-                    <span>Simpan Lahan</span>
+                    <span>Save Field</span>
                   )}
                 </button>
               </div>
@@ -503,7 +567,7 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
           letter-spacing: 0.05em;
         }
 
-        .form-input, .form-select {
+        .form-input {
           background: #fff;
           border: 1px solid #E8E2D9;
           border-radius: 10px;
@@ -514,10 +578,41 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
           width: 100%;
         }
 
+        .form-select {
+          background: #fff;
+          border: 1px solid #E8E2D9;
+          border-radius: 10px;
+          padding: 0.75rem 2.5rem 0.75rem 1rem;
+          font-size: 0.9rem;
+          color: #161616;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          width: 100%;
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%235A6F45' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+          background-position: right 1rem center;
+          background-repeat: no-repeat;
+          background-size: 1.25rem;
+          cursor: pointer;
+        }
+
         .form-input:focus, .form-select:focus {
           outline: none;
           border-color: #14532D;
           box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.1);
+        }
+
+        .form-input.error, .form-select.error {
+          border-color: #C0392B;
+          box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
+        }
+
+        .field-error-text {
+          color: #C0392B;
+          font-size: 0.75rem;
+          font-weight: 500;
+          margin-top: 0.2rem;
         }
 
         .modal-footer {

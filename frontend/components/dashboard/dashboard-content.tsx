@@ -64,10 +64,6 @@ export function DashboardContent({ fields, weather, recommendations, profile }: 
               : `Here's your farm overview for today. ${criticals === 0 ? 'All fields are healthy.' : `${criticals} critical alert(s) need attention.`}`}
           </p>
         </div>
-        <div className="db-greeting-badge">
-          <div className="db-greeting-badge-dot" />
-          <span>Sync: Active</span>
-        </div>
       </div>
 
       {/* ── Metric Cards ── */}

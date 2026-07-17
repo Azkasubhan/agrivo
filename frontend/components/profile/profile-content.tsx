@@ -128,7 +128,7 @@ export function ProfileContent() {
             {[
               { label: 'Total Area', val: `${totalArea} ha`, icon: '🌾' },
               { label: 'Active Fields', val: fields.length.toString(), icon: '🗺️' },
-              { label: 'Primary Crop', val: 'Rice (Padi)', icon: '🌱' },
+              { label: 'Primary Crop', val: 'Rice', icon: '🌱' },
             ].map(r => (
               <div key={r.label} className="pc-overview-item">
                 <span className="pc-overview-icon">{r.icon}</span>
