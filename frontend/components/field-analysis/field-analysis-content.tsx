@@ -199,11 +199,10 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
   return (
     <div className="fa-root">
       {errorMsg && (
-        <div className="floating-toast error animate-slide-in-left">
-          <div className="toast-icon">⚠️</div>
+        <div className="floating-toast error animate-slide-in-right">
           <div className="toast-content">
-            <div className="toast-title">Validation Error</div>
-            <div className="toast-message">{errorMsg}</div>
+            <span className="toast-title">Validation Error</span>
+            <span className="toast-message">{errorMsg}</span>
           </div>
           <button className="toast-close" onClick={() => setErrorMsg('')}>&times;</button>
         </div>
@@ -725,35 +724,31 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         .floating-toast {
           position: fixed;
           top: 2rem;
-          left: 2rem;
+          right: 2rem;
           z-index: 10000;
-          background: #FFF5F5;
-          border-left: 4px solid #E53E3E;
-          border-radius: 12px;
-          box-shadow: 0 10px 25px -5px rgba(229, 62, 62, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-          padding: 1rem 1.25rem;
+          background: #fff;
+          border: 1px solid #E8E2D9;
+          border-left: 4px solid #C0392B;
+          border-radius: 10px;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+          padding: 0.85rem 1.25rem;
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 1rem;
           min-width: 320px;
           max-width: 420px;
-          animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideInLeft {
+        @keyframes slideInRight {
           from {
             opacity: 0;
-            transform: translateX(-30px);
+            transform: translateX(30px);
           }
           to {
             opacity: 1;
             transform: translateX(0);
           }
-        }
-
-        .toast-icon {
-          font-size: 1.25rem;
-          color: #E53E3E;
         }
 
         .toast-content {
@@ -765,15 +760,15 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
 
         .toast-title {
           font-size: 0.75rem;
-          font-weight: 800;
+          font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #E53E3E;
+          color: #C0392B;
         }
 
         .toast-message {
           font-size: 0.85rem;
-          color: #2D3748;
+          color: #2c2c2c;
           font-weight: 600;
           line-height: 1.4;
         }
@@ -781,16 +776,18 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         .toast-close {
           background: transparent;
           border: none;
-          color: #A0AEC0;
-          font-size: 1.25rem;
+          color: #787878;
+          font-size: 1.1rem;
           cursor: pointer;
-          padding: 0 0.25rem;
-          line-height: 1;
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           transition: color 0.2s;
         }
 
         .toast-close:hover {
-          color: #4A5568;
+          color: #161616;
         }
 
         @media (max-width: 1024px) {
