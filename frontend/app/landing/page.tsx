@@ -276,18 +276,17 @@ export default function LandingPage() {
       {/* ── TESTIMONIAL ──────────────────────────────────────── */}
       <section className="ag-testi-section" ref={testi.ref}>
         <div className="ag-testi-img-wrap">
-          <Image src="/farmer-portrait.png" alt="Pak Slamet, rice farmer" fill className="ag-testi-img" />
+          <Image src="/aris.jpeg" alt="Strawvo Community" fill className="ag-testi-img" />
           <div className="ag-testi-overlay" />
         </div>
         <div className={`ag-testi-content${testi.visible ? ' visible' : ''}`}>
           <div className="ag-quote-mark">"</div>
           <blockquote className="ag-quote">
-            Before AGRIVO, I used water based on habit. Now I use data. My water bill dropped by
-            a third, and my yield didn't change at all. It's the most useful thing on my phone.
+            "By combining the Strawvo community's dedication with AGRIVO's data-driven insights, we are transforming how we manage our rice fields. Our water usage is optimized, and our community's harvests are more resilient than ever."
           </blockquote>
           <div className="ag-testi-person">
-            <div className="ag-testi-name">Pak Slamet Riyadi</div>
-            <div className="ag-testi-role">Rice Farmer · Klaten, Central Java · 4.2 hectares</div>
+            <div className="ag-testi-name">Strawvo Community</div>
+            <div className="ag-testi-role">Agricultural Innovation Group</div>
           </div>
         </div>
       </section>

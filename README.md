@@ -42,7 +42,7 @@ AI Engine:
 - **Environmental Impact** — Honest net GWP (CH₄ + N₂O), not just methane reduction claims
 - **Field Management Dashboard** — Monitor soil, crop stage, weather, and recommendation history per field
 - **Preview & Save** — Review AI recommendations before committing to history
-- **WhatsApp Notifications** — Daily recommendations via Fonnte API (no app installation needed)
+- **System Notifications** — Daily recommendations directly in your dashboard
 - **Automated Daily Cron** — Recommendations generated at 06:00 AM every day
 
 ---
@@ -56,7 +56,7 @@ AI Engine:
 | Auth | JWT + Passlib (bcrypt) |
 | AI/ML | XGBoost + Rule Engine (IRRI research-based) |
 | Weather | Open-Meteo API (forecast + historical) |
-| Notifications | Fonnte WhatsApp API |
+| Notifications | In-App System Alerts |
 | Migrations | Alembic |
 | Scheduler | APScheduler (daily cron) |
 
@@ -197,7 +197,7 @@ When a recommendation is triggered (manually or daily cron at 06:00 AM):
 2. **RuleEngine** — Filters candidate irrigation strategies using IRRI research-based scientific constraints (soil type, crop stage, water table depth, rainfall patterns)
 3. **MLModel (XGBoost)** — Selects the optimal strategy from filtered candidates and predicts yield, water savings, and GWP impact
 4. **ExplanationGenerator** — Produces transparent reasoning: why this strategy was chosen, why others were rejected, and governance notes for communal irrigation systems
-5. **RecommendationService** — Saves results and optionally sends WhatsApp notification via Fonnte API
+5. **RecommendationService** — Saves results and optionally triggers system notifications
 
 ### Strategy Options
 
@@ -230,8 +230,6 @@ When a recommendation is triggered (manually or daily cron at 06:00 AM):
 | `REFRESH_TOKEN_EXPIRE_DAYS` | JWT refresh token lifetime |
 | `OPEN_METEO_BASE_URL` | Open-Meteo forecast API URL |
 | `OPEN_METEO_ARCHIVE_URL` | Open-Meteo historical API URL |
-| `FONNTE_API_TOKEN` | Fonnte WhatsApp API token |
-| `FONNTE_DEVICE_ID` | Fonnte WhatsApp device ID |
 
 ### Frontend (`frontend/.env.local`)
 
@@ -251,7 +249,7 @@ When a recommendation is triggered (manually or daily cron at 06:00 AM):
 
 - Open-Meteo API calls can take 30-60 seconds (weather data is large)
 - XGBoost model uses synthetic training data calibrated against IRRI research
-- WhatsApp notifications require active Fonnte subscription
+- Browser push notifications require explicit user permission
 - Single-user scope in MVP (multi-user dashboard for extension workers is post-MVP)
 - No IoT sensor integration (manual field data input only)
 - Leaflet map plugin requires npm network availability for installation

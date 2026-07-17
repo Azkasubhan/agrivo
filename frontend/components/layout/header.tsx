@@ -219,7 +219,7 @@ export function Header() {
                       checked={whatsappEnabled}
                       onChange={(e) => setWhatsappEnabled(e.target.checked)}
                     />
-                    Enable WhatsApp Alerts
+                    Enable System Alerts
                   </label>
                   <label className="ag-settings-label">
                     <input
