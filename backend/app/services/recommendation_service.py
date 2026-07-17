@@ -121,7 +121,7 @@ class RecommendationService:
             "explanation": explanation_dict,
         }
 
-    def generate_recommendation(self, user_id: UUID, field_id: UUID) -> dict[str, Any]:
+    def generate_recommendation(self, user_id: UUID, field_id: UUID, preview: bool = False) -> dict[str, Any]:
         """Trigger a fresh recommendation cycle for a field."""
         # 1. Fetch Field (verifies ownership)
         field = self.field_service._get_owned_or_raise(user_id, field_id)
@@ -162,6 +162,7 @@ class RecommendationService:
             confidence_score=engine_output.confidence_score,
             engine_type=engine_output.engine_type,
             model_version=engine_output.model_version,
+            is_saved=not preview,
         )
 
         # 6. Persist Predictions & Explanation
@@ -208,4 +209,19 @@ class RecommendationService:
         # Verify field ownership
         self.field_service._get_owned_or_raise(user_id, rec.field_id)
 
+        return self._map_to_response(rec)
+
+    def save_recommendation(self, user_id: UUID, rec_id: UUID) -> dict[str, Any]:
+        """Mark a draft recommendation as saved."""
+        rec = self.repo.get_by_id(rec_id)
+        if rec is None:
+            from app.core.exceptions import FieldNotFoundError
+            raise FieldNotFoundError()
+
+        # Verify field ownership
+        self.field_service._get_owned_or_raise(user_id, rec.field_id)
+
+        rec.is_saved = True
+        self.repo.session.commit()
+        
         return self._map_to_response(rec)

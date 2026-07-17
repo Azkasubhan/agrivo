@@ -6,6 +6,8 @@ import { Droplets, ThermometerSun, Wind, ArrowRight } from 'lucide-react';
 
 interface DashboardContentProps {
   fields: any[];
+  selectedFieldId?: string;
+  onFieldSelect?: (id: string) => void;
   weather: any;
   recommendations: any[];
   profile: any;
@@ -27,7 +29,7 @@ const urgencyColor = (u: string) => {
   return { bg: '#f0f7ec', border: '#c0d9b4', dot: '#14532D', label: 'Normal' };
 };
 
-export function DashboardContent({ fields, weather, recommendations, profile }: DashboardContentProps) {
+export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weather, recommendations, profile }: DashboardContentProps) {
   const totalArea = fields.reduce((s, f) => s + f.area, 0);
   const avgMoisture = fields.length > 0 ? Math.round(fields.reduce((s, f) => s + f.moisture, 0) / fields.length) : 0;
   const criticals = recommendations.filter(r => (r.urgency || '').toLowerCase() === 'high').length;
@@ -221,28 +223,34 @@ export function DashboardContent({ fields, weather, recommendations, profile }: 
         </div>
       </div>
 
-      {/* ── Alerts ── */}
+      {/* ── Recommendation History ── */}
       {recommendations.length > 0 && (
         <div className="db-section">
           <div className="db-section-header">
-            <h3 className="db-section-title">Active Alerts</h3>
-            <a href="/recommendations" className="db-see-all">See all →</a>
+            <h3 className="db-section-title">Riwayat Rekomendasi</h3>
+            <Link href="/recommendations" className="db-see-all">Buka AI Engine →</Link>
           </div>
           <div className="db-alerts-list">
-            {recommendations.slice(0, 3).map(rec => {
-              const uc = urgencyColor(rec.urgency);
+            {recommendations.map(rec => {
+              const dateObj = new Date(rec.created_at || new Date());
               return (
-                <div key={rec.id} className="db-alert-item" style={{ background: uc.bg, borderColor: uc.border }}>
-                  <div className="db-alert-dot" style={{ background: uc.dot }} />
+                <div key={rec.id} className="db-alert-item" style={{ background: '#fff', borderColor: '#E8E2D9' }}>
+                  <div className="db-alert-dot" style={{ background: '#14532D' }} />
                   <div className="db-alert-body">
-                    <div className="db-alert-title">{rec.title}</div>
-                    <div className="db-alert-desc">{rec.description}</div>
-                    <div className="db-alert-meta">
-                      <span className="db-alert-tag">{rec.category}</span>
-                      <span className="db-alert-urgency" style={{ color: uc.dot }}>{uc.label}</span>
+                    <div className="db-alert-title">{rec.recommended_strategy_display || 'Rekomendasi'}</div>
+                    <div className="db-alert-desc" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {rec.description || 'Detail strategi.'}
+                    </div>
+                    <div className="db-alert-meta" style={{ marginTop: '0.75rem' }}>
+                      <span className="db-alert-tag">{dateObj.toLocaleDateString()}</span>
+                      {rec.prediction && (
+                        <>
+                          <span className="db-alert-tag">💧 {Math.round(rec.prediction.water_saving_percent)}% Hemat Air</span>
+                          <span className="db-alert-tag">🌾 {parseFloat(rec.prediction.expected_yield_ton_per_ha).toFixed(1)} t/ha</span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <ArrowRight size={16} color="#a09589" />
                 </div>
               );
             })}

@@ -100,12 +100,13 @@ def get_field_weather(
 @router.post("/{field_id}/recommendations", summary="Trigger a new AI recommendation", status_code=201)
 def trigger_recommendation(
     field_id: UUID,
+    preview: bool = Query(default=False, description="If true, generates a preview without saving it to history."),
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_db_session),
 ):
     """Generate a new AI recommendation and prediction for a field."""
     from app.services.recommendation_service import RecommendationService  # noqa: PLC0415
-    result = RecommendationService(session).generate_recommendation(current_user.id, field_id)
+    result = RecommendationService(session).generate_recommendation(current_user.id, field_id, preview=preview)
     return build_success_response(
         message="Rekomendasi berhasil dibuat.",
         data=result,
@@ -132,3 +133,17 @@ def list_field_recommendations(
     )
 
 
+@router.patch("/{field_id}/recommendations/{rec_id}/save", summary="Save a draft recommendation")
+def save_field_recommendation(
+    field_id: UUID,
+    rec_id: UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_db_session),
+):
+    """Mark a previewed recommendation as saved in the history."""
+    from app.services.recommendation_service import RecommendationService  # noqa: PLC0415
+    result = RecommendationService(session).save_recommendation(current_user.id, rec_id)
+    return build_success_response(
+        message="Rekomendasi berhasil disimpan.",
+        data=result,
+    )

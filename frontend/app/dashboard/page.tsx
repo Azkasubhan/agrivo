@@ -8,14 +8,14 @@ import { apiClient } from '@/lib/api-client';
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [fields, setFields] = useState<any[]>([]);
+  const [selectedFieldId, setSelectedFieldId] = useState<string>('');
   const [weather, setWeather] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
+    async function loadInitialData() {
       try {
-        // 1. Fetch profile and fields
         const [profileRes, fieldsRes] = await Promise.all([
           apiClient<{ data: any }>('/users/me'),
           apiClient<{ data: any }>('/fields'),
@@ -24,7 +24,6 @@ export default function Dashboard() {
         setProfile(profileRes.data);
         const rawFields = fieldsRes.data.items || fieldsRes.data;
 
-        // Map backend fields to the frontend structure
         const mappedFields = rawFields.map((f: any) => ({
           id: f.id,
           name: f.name,
@@ -38,19 +37,8 @@ export default function Dashboard() {
         }));
 
         setFields(mappedFields);
-
-        // 2. Fetch weather and recommendations if field exists
         if (rawFields.length > 0) {
-          const firstFieldId = rawFields[0].id;
-          const [weatherRes, recsRes] = await Promise.all([
-            apiClient<{ data: any }>(`/fields/${firstFieldId}/weather`),
-            apiClient<{ data: any }>(`/fields/${firstFieldId}/recommendations`),
-          ]);
-
-          setWeather(weatherRes.data);
-          
-          const recsData = recsRes.data.items || recsRes.data;
-          setRecommendations(recsData);
+          setSelectedFieldId(rawFields[0].id);
         }
       } catch (err) {
         console.error('Failed to load dashboard data', err);
@@ -58,8 +46,26 @@ export default function Dashboard() {
         setLoading(false);
       }
     }
-    loadData();
+    loadInitialData();
   }, []);
+
+  useEffect(() => {
+    async function loadFieldSpecificData() {
+      if (!selectedFieldId) return;
+      try {
+        const [weatherRes, recsRes] = await Promise.all([
+          apiClient<{ data: any }>(`/fields/${selectedFieldId}/weather`),
+          apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations`),
+        ]);
+
+        setWeather(weatherRes.data);
+        setRecommendations(recsRes.data.items || recsRes.data);
+      } catch (err) {
+        console.error('Failed to load field data', err);
+      }
+    }
+    loadFieldSpecificData();
+  }, [selectedFieldId]);
 
   if (loading) {
     return (
@@ -75,6 +81,8 @@ export default function Dashboard() {
     <MainLayout>
       <DashboardContent
         fields={fields}
+        selectedFieldId={selectedFieldId}
+        onFieldSelect={setSelectedFieldId}
         weather={weather}
         recommendations={recommendations}
         profile={profile}

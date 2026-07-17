@@ -44,10 +44,12 @@ class RecommendationRepository:
         return self.session.execute(statement).scalar_one_or_none()
 
     def list_by_field(
-        self, field_id: UUID, page: int, page_size: int
+        self, field_id: UUID, page: int, page_size: int, include_unsaved: bool = False
     ) -> tuple[list[Recommendation], int]:
         """Return a paginated list of recommendations for a field, ordered by date descending."""
         statement = select(Recommendation).where(Recommendation.field_id == field_id)
+        if not include_unsaved:
+            statement = statement.where(Recommendation.is_saved == True)
         total = self.session.execute(
             select(func.count()).select_from(statement.subquery())
         ).scalar_one()

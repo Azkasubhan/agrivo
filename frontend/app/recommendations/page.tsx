@@ -37,6 +37,8 @@ export default function RecommendationsPage() {
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [previewRec, setPreviewRec] = useState<any>(null);
+  const [savingRec, setSavingRec] = useState(false);
 
   const [activeStrategyKey, setActiveStrategyKey] = useState('AWD_MILD');
   const activeStrategy = STRATEGIES.find(s => s.key === activeStrategyKey) || STRATEGIES[0];
@@ -97,6 +99,7 @@ export default function RecommendationsPage() {
     setGenerating(true);
     setGenStep(0);
     setError(null);
+    setPreviewRec(null);
 
     // Simulate step progression while waiting for API
     let currentStep = 0;
@@ -111,13 +114,13 @@ export default function RecommendationsPage() {
 
     try {
       // 120 second timeout — AI Engine can take 30-60s
-      await apiClient(`/fields/${selectedFieldId}/recommendations`, {
+      const response = await apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations?preview=true`, {
         method: 'POST',
         timeout: 120000,
       });
       if (genTimerRef.current) clearInterval(genTimerRef.current);
       setGenStep(GENERATE_STEPS.length); // all done
-      await fetchRecommendations(selectedFieldId);
+      setPreviewRec(response.data);
     } catch (err: any) {
       console.error('Failed to generate recommendation', err);
       if (err.message?.includes('timed out')) {
@@ -128,6 +131,24 @@ export default function RecommendationsPage() {
     } finally {
       if (genTimerRef.current) clearInterval(genTimerRef.current);
       setGenerating(false);
+    }
+  };
+
+  const handleSavePreview = async () => {
+    if (!selectedFieldId || !previewRec) return;
+    setSavingRec(true);
+    setError(null);
+    try {
+      await apiClient(`/fields/${selectedFieldId}/recommendations/${previewRec.id}/save`, {
+        method: 'PATCH',
+      });
+      setPreviewRec(null);
+      await fetchRecommendations(selectedFieldId);
+    } catch (err: any) {
+      console.error('Failed to save recommendation', err);
+      setError(err.message || 'Gagal menyimpan rekomendasi.');
+    } finally {
+      setSavingRec(false);
     }
   };
 
@@ -148,18 +169,37 @@ export default function RecommendationsPage() {
     <MainLayout>
       <div className="rp-root">
         {/* Header */}
-        <div className="rp-header">
+        <div className="rp-header" style={{ marginBottom: '1.5rem' }}>
           <div>
             <p className="rp-eyebrow">AI Recommendations</p>
             <h1 className="rp-h1">Irrigation Guidance</h1>
             <p className="rp-desc">Data-driven strategies updated daily based on weather, soil, and crop stage.</p>
           </div>
-          {fields.length > 0 && (
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', color: '#a09589' }}>
-                Field:
-              </span>
-              <div style={{ width: '260px' }}>
+        </div>
+
+        {/* ── Control Panel (Field Selector & AI Engine) ── */}
+        <div style={{ 
+          background: '#fff', 
+          border: '1px solid #E8E2D9', 
+          borderRadius: '16px', 
+          padding: '1.25rem 1.5rem', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: '1rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+          marginBottom: '2rem'
+        }}>
+          {fields.length > 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#f0f7ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>
+                🌾
+              </div>
+              <div style={{ flex: 1, maxWidth: '280px' }}>
+                <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#a09589', marginBottom: '0.25rem' }}>
+                  Lahan Aktif
+                </span>
                 <CustomSelect
                   value={selectedFieldId}
                   onChange={setSelectedFieldId}
@@ -170,58 +210,57 @@ export default function RecommendationsPage() {
                 />
               </div>
             </div>
+          ) : (
+            <div style={{ color: '#787878', fontSize: '0.9rem' }}>Belum ada lahan. Silakan tambah lahan terlebih dahulu.</div>
           )}
-        </div>
 
-        {/* Generate Engine Banner */}
-        {selectedFieldId && (
-          <div style={{ background: 'linear-gradient(135deg, #14532D 0%, #1a6b3a 50%, #0f4422 100%)', color: '#fff', borderRadius: '18px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-            {/* Subtle pattern overlay */}
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)', pointerEvents: 'none' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1 }}>
-              <div>
-                <h3 style={{ fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                  <Zap size={18} />
+          {/* AI Engine Button */}
+          {selectedFieldId && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', borderRight: '1px solid #E8E2D9', paddingRight: '1.5rem' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#161616', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Zap size={16} color="#14532D" />
                   Agrivo Hybrid AI Engine
-                </h3>
-                <p style={{ fontSize: '0.85rem', opacity: 0.9, marginTop: '0.25rem', margin: 0 }}>
-                  Rule Engine (constraint filter) + XGBoost ML (keputusan final) — input otomatis dari cuaca & data lahan Anda.
-                </p>
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#787878', marginTop: '0.2rem' }}>Rule Engine + XGBoost ML</span>
               </div>
               <button
                 onClick={handleGenerate}
                 disabled={generating}
                 style={{
-                  background: generating ? 'rgba(255,255,255,0.9)' : '#fff',
-                  color: '#14532D',
+                  background: 'linear-gradient(135deg, #14532D 0%, #1a6b3a 100%)',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: '10px',
-                  padding: '0.75rem 1.5rem',
+                  padding: '0.8rem 1.6rem',
                   fontWeight: 700,
+                  fontSize: '0.95rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
                   cursor: generating ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                  boxShadow: '0 4px 12px rgba(20,83,45,0.2)',
                   opacity: generating ? 0.8 : 1,
                   transition: 'all 0.2s',
+                  minWidth: '200px',
+                  justifyContent: 'center'
                 }}
               >
                 {generating ? (
                   <>
-                    <Loader size={16} className="rp-spin" />
+                    <Loader size={18} className="rp-spin" />
                     Memproses...
                   </>
                 ) : (
                   <>
-                    <Zap size={16} />
+                    <Sparkles size={18} />
                     Jalankan AI Engine
                   </>
                 )}
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ── Generating Overlay ── */}
         {generating && (
@@ -257,6 +296,63 @@ export default function RecommendationsPage() {
                 })}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ── Preview Mode ── */}
+        {previewRec && !generating && (
+          <div style={{ background: '#f8faf6', border: '2px solid #c0d9b4', borderRadius: '18px', padding: '1.5rem', margin: '1.5rem 0', boxShadow: '0 8px 24px rgba(20,83,45,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#e0f0d8', color: '#14532D', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                  <Sparkles size={14} /> Preview AI
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#161616', margin: 0 }}>
+                  {previewRec.recommended_strategy_display}
+                </h3>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setPreviewRec(null)}
+                  disabled={savingRec}
+                  style={{ background: '#fff', border: '1px solid #E8E2D9', color: '#787878', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                  Buang
+                </button>
+                <button
+                  onClick={handleSavePreview}
+                  disabled={savingRec}
+                  style={{ background: '#14532D', border: 'none', color: '#fff', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(20,83,45,0.2)' }}
+                >
+                  {savingRec ? <Loader size={16} className="rp-spin" /> : <CheckCircle size={16} />}
+                  Simpan Rekomendasi
+                </button>
+              </div>
+            </div>
+            
+            <p style={{ color: '#555', fontSize: '0.95rem', lineHeight: 1.6, margin: '0 0 1.5rem 0', maxWidth: '800px' }}>
+              {previewRec.description}
+            </p>
+
+            {previewRec.prediction && (
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
+                  <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>💧</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>{Math.round(previewRec.prediction.water_saving_percent)}%</div>
+                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Hemat Air</div>
+                </div>
+                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
+                  <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🌾</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>{parseFloat(previewRec.prediction.expected_yield_ton_per_ha).toFixed(1)} t/ha</div>
+                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Prediksi Yield</div>
+                </div>
+                <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
+                  <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🌍</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>-{Math.round(previewRec.prediction.net_gwp_reduction_percent)}%</div>
+                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Reduksi Emisi</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -41,6 +41,7 @@ class Recommendation(UUIDPrimaryKeyMixin, CreatedAtMixin, BaseModel):
     confidence_score: Mapped[Decimal] = mapped_column(Numeric(4, 3), nullable=False)
     engine_type: Mapped[str] = mapped_column(String(20), nullable=False)
     model_version: Mapped[str] = mapped_column(String(30), nullable=False)
+    is_saved: Mapped[bool] = mapped_column(default=False, server_default="false", nullable=False)
 
     field: Mapped["Field"] = relationship(back_populates="recommendations")
     weather_snapshot: Mapped["WeatherSnapshot"] = relationship(back_populates="recommendations")
