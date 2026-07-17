@@ -6,6 +6,30 @@ import { Field } from '@/lib/mock-data';
 import { apiClient } from '@/lib/api-client';
 import { Plus, X, Loader2 } from 'lucide-react';
 import { CustomSelect } from '../ui/custom-select';
+import dynamic from 'next/dynamic';
+
+const MapPicker = dynamic(
+  () => import('../ui/map-picker').then((mod) => mod.MapPicker),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{
+        height: '280px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#FAF8F3',
+        borderRadius: '12px',
+        border: '1px solid #E8E2D9',
+        color: '#787878',
+        fontSize: '0.85rem',
+        fontWeight: 500
+      }}>
+        Loading interactive map...
+      </div>
+    ),
+  }
+);
 
 const soilTypeOptions = [
   { value: 'CLAY', label: 'Clay' },
@@ -334,15 +358,29 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                   {errors.area && <span className="field-error-text">{errors.area}</span>}
                 </div>
 
+                <div className="form-group full-width">
+                  <label className="form-label">Select Location on Map *</label>
+                  <MapPicker
+                    latitude={latitude ? parseFloat(latitude) : null}
+                    longitude={longitude ? parseFloat(longitude) : null}
+                    onChange={(lat, lng) => {
+                      setLatitude(String(lat));
+                      setLongitude(String(lng));
+                      setErrors(prev => ({ ...prev, latitude: undefined, longitude: undefined }));
+                    }}
+                  />
+                </div>
+
                 <div className="form-group">
                   <label className="form-label">Latitude * (-11.0000 to 6.1000)</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. -7.7025"
+                    readOnly
+                    placeholder="Select on map"
                     value={latitude}
-                    onChange={(e) => handleLatitudeChange(e.target.value)}
                     className={`form-input${errors.latitude ? ' error' : ''}`}
+                    style={{ background: '#F4F1EA', cursor: 'not-allowed', color: '#555' }}
                   />
                   {errors.latitude && <span className="field-error-text">{errors.latitude}</span>}
                 </div>
@@ -352,10 +390,11 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 110.6012"
+                    readOnly
+                    placeholder="Select on map"
                     value={longitude}
-                    onChange={(e) => handleLongitudeChange(e.target.value)}
                     className={`form-input${errors.longitude ? ' error' : ''}`}
+                    style={{ background: '#F4F1EA', cursor: 'not-allowed', color: '#555' }}
                   />
                   {errors.longitude && <span className="field-error-text">{errors.longitude}</span>}
                 </div>
