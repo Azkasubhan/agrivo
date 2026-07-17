@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Field } from '@/lib/mock-data';
 import { apiClient } from '@/lib/api-client';
@@ -89,6 +89,15 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
   const [longitude, setLongitude] = useState('110.6012');
   const [irrigationSystem, setIrrigationSystem] = useState('TECHNICAL');
   const [prevIrrigation, setPrevIrrigation] = useState('CONTINUOUS_FLOODING');
+
+  useEffect(() => {
+    if (errorMsg) {
+      const timer = setTimeout(() => {
+        setErrorMsg('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMsg]);
 
   const handleAreaChange = (val: string) => {
     if (/^\d*\.?\d*$/.test(val)) {
@@ -189,6 +198,16 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
 
   return (
     <div className="fa-root">
+      {errorMsg && (
+        <div className="floating-toast error animate-slide-in-left">
+          <div className="toast-icon">⚠️</div>
+          <div className="toast-content">
+            <div className="toast-title">Validation Error</div>
+            <div className="toast-message">{errorMsg}</div>
+          </div>
+          <button className="toast-close" onClick={() => setErrorMsg('')}>&times;</button>
+        </div>
+      )}
 
       <div className="fa-header">
         <div>
@@ -294,11 +313,6 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
             </div>
             
             <form onSubmit={handleSubmit} className="modal-form">
-              {errorMsg && (
-                <div className="form-error-msg">
-                  ⚠️ {errorMsg}
-                </div>
-              )}
 
               <div className="form-grid">
                 <div className="form-group full-width">
@@ -706,6 +720,78 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
           to { transform: rotate(360deg); }
         }
 
+
+        /* Floating toast notification styles */
+        .floating-toast {
+          position: fixed;
+          top: 2rem;
+          left: 2rem;
+          z-index: 10000;
+          background: #FFF5F5;
+          border-left: 4px solid #E53E3E;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px -5px rgba(229, 62, 62, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+          padding: 1rem 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          min-width: 320px;
+          max-width: 420px;
+          animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .toast-icon {
+          font-size: 1.25rem;
+          color: #E53E3E;
+        }
+
+        .toast-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+        }
+
+        .toast-title {
+          font-size: 0.75rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #E53E3E;
+        }
+
+        .toast-message {
+          font-size: 0.85rem;
+          color: #2D3748;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+
+        .toast-close {
+          background: transparent;
+          border: none;
+          color: #A0AEC0;
+          font-size: 1.25rem;
+          cursor: pointer;
+          padding: 0 0.25rem;
+          line-height: 1;
+          transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+          color: #4A5568;
+        }
 
         @media (max-width: 1024px) {
           .fa-header { flex-direction: column; align-items: flex-start; gap: 1rem; }

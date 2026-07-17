@@ -81,7 +81,21 @@ export async function apiClient<T>(
       }
     }
     const errorData = await response.json().catch(() => ({}));
-    let message = errorData.message || '';
+    let message = '';
+
+    if (errorData.error) {
+      if (typeof errorData.error.message === 'string') {
+        message = errorData.error.message;
+      } else if (Array.isArray(errorData.error.details)) {
+        message = errorData.error.details
+          .map((d: any) => `${d.field || 'field'}: ${d.issue || 'invalid value'}`)
+          .join(', ');
+      }
+    }
+
+    if (!message && errorData.message) {
+      message = errorData.message;
+    }
 
     if (!message && errorData.detail) {
       if (typeof errorData.detail === 'string') {
