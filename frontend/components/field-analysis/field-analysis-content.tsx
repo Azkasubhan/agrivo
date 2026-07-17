@@ -201,7 +201,6 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
       {errorMsg && (
         <div className="floating-toast error animate-slide-in-right">
           <div className="toast-content">
-            <span className="toast-title">Validation Error</span>
             <span className="toast-message">{errorMsg}</span>
           </div>
           <button className="toast-close" onClick={() => setErrorMsg('')}>&times;</button>
