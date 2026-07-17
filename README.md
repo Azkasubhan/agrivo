@@ -271,25 +271,6 @@ When a recommendation is triggered (manually or daily cron at 06:00 AM):
 
 ---
 
-## Documentation
-
-Full documentation in `/docs`:
-
-| File | Content |
-|---|---|
-| `01-project-overview.md` | Problem statement, target users, value proposition |
-| `02-system-architecture.md` | Tech stack and architecture diagrams |
-| `03-tech-stack.md` | Detailed technology choices and rationale |
-| `04-input-specification.md` | All input fields, validation rules, and data sources |
-| `05-database-design.md` | All tables, columns, and relationships |
-| `06-api-specification.md` | All endpoints with request/response examples |
-| `07-ai-engine.md` | Full AI pipeline design, rule engine, ML model |
-| `08-security-validation.md` | Auth, RBAC, input validation, security measures |
-| `09-coding-standards.md` | Code style, naming conventions, patterns |
-| `10-ui-ux-guidelines.md` | Design system, components, UX patterns |
-
----
-
 ## API Documentation
 
 When backend is running: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
