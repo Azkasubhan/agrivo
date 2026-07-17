@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { apiClient } from '@/lib/api-client';
-import { ArrowRight, CheckCircle, Clock, AlertCircle, Zap, Loader } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, AlertCircle, Zap, Loader, Cloud, Cpu, Database, Sparkles } from 'lucide-react';
 
 const STRATEGIES = [
   { key: 'AWD_MILD', name: 'Alternate Wetting & Drying (Mild)', icon: '🔄', desc: 'Allow field to dry moderately between irrigation events. Great balance of water saving and yield stability.', water: '15-25%', gwp: '−20-30%', yield: 'Stable / +1%' },
@@ -12,6 +12,13 @@ const STRATEGIES = [
   { key: 'CONTINUOUS_FLOODING_MODIFIED', name: 'Continuous Flooding (Modified)', icon: '🌊', desc: 'Slightly reduced standing water depths to save water.', water: '10%', gwp: '−15%', yield: 'Stable' },
   { key: 'DELAYED_IRRIGATION', name: 'Delayed Irrigation', icon: '⏳', desc: 'Delay initial flooding after transplanting to reduce early methane.', water: '8%', gwp: '−10%', yield: 'No loss' },
   { key: 'PARTIAL_IRRIGATION', name: 'Partial Irrigation', icon: '💧', desc: 'Reduce irrigation frequency in the mid-season. Moderate water savings.', water: '18%', gwp: '−20%', yield: '−4%' },
+];
+
+const GENERATE_STEPS = [
+  { icon: Cloud, label: 'Mengambil data cuaca real-time', desc: 'Forecast 14 hari & historis 30 hari dari Open-Meteo' },
+  { icon: Cpu, label: 'Menjalankan Rule Engine', desc: 'Filter constraint ilmiah berbasis riset IRRI' },
+  { icon: Sparkles, label: 'ML Model inference (XGBoost)', desc: 'Prediksi strategi optimal, yield, dan emisi GWP' },
+  { icon: Database, label: 'Menyimpan rekomendasi', desc: 'Menyimpan hasil ke database untuk riwayat' },
 ];
 
 const urgencyStyle = (u: string) => {
@@ -27,10 +34,13 @@ export default function RecommendationsPage() {
   const [loadingFields, setLoadingFields] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [genStep, setGenStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const [activeStrategyKey, setActiveStrategyKey] = useState('AWD_MILD');
   const activeStrategy = STRATEGIES.find(s => s.key === activeStrategyKey) || STRATEGIES[0];
+
+  const genTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 1. Fetch user fields
   useEffect(() => {
@@ -44,7 +54,7 @@ export default function RecommendationsPage() {
         }
       } catch (err) {
         console.error('Failed to load fields', err);
-        setError('Failed to load field data.');
+        setError('Gagal memuat data lahan. Pastikan Anda sudah login.');
       } finally {
         setLoadingFields(false);
       }
@@ -61,7 +71,7 @@ export default function RecommendationsPage() {
       setRecommendations(res.data.items);
     } catch (err) {
       console.error('Failed to load recommendations', err);
-      setError('Failed to load recommendations.');
+      setError('Gagal memuat rekomendasi.');
     } finally {
       setLoadingRecs(false);
     }
@@ -73,18 +83,49 @@ export default function RecommendationsPage() {
     }
   }, [selectedFieldId]);
 
-  // 3. Trigger new recommendation run
+  // Cleanup generate step timer on unmount
+  useEffect(() => {
+    return () => {
+      if (genTimerRef.current) clearInterval(genTimerRef.current);
+    };
+  }, []);
+
+  // 3. Trigger new recommendation run with step-by-step progress
   const handleGenerate = async () => {
     if (!selectedFieldId) return;
     setGenerating(true);
+    setGenStep(0);
     setError(null);
+
+    // Simulate step progression while waiting for API
+    let currentStep = 0;
+    genTimerRef.current = setInterval(() => {
+      currentStep++;
+      if (currentStep < GENERATE_STEPS.length) {
+        setGenStep(currentStep);
+      } else {
+        if (genTimerRef.current) clearInterval(genTimerRef.current);
+      }
+    }, 8000);
+
     try {
-      await apiClient(`/fields/${selectedFieldId}/recommendations`, { method: 'POST' });
+      // 120 second timeout — AI Engine can take 30-60s
+      await apiClient(`/fields/${selectedFieldId}/recommendations`, {
+        method: 'POST',
+        timeout: 120000,
+      });
+      if (genTimerRef.current) clearInterval(genTimerRef.current);
+      setGenStep(GENERATE_STEPS.length); // all done
       await fetchRecommendations(selectedFieldId);
     } catch (err: any) {
       console.error('Failed to generate recommendation', err);
-      setError(err.message || 'Failed to run AI recommendation engine.');
+      if (err.message?.includes('timed out')) {
+        setError('Proses AI Engine memakan waktu terlalu lama. Silakan coba lagi.');
+      } else {
+        setError(err.message || 'Gagal menjalankan AI Engine.');
+      }
     } finally {
+      if (genTimerRef.current) clearInterval(genTimerRef.current);
       setGenerating(false);
     }
   };
@@ -143,22 +184,24 @@ export default function RecommendationsPage() {
 
         {/* Generate Engine Banner */}
         {selectedFieldId && (
-          <div className="bg-gradient-to-r from-primary to-primary/80 rounded-lg shadow-sm p-6 text-white" style={{ background: '#14532D', color: '#fff', borderRadius: '18px', padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ background: 'linear-gradient(135deg, #14532D 0%, #1a6b3a 50%, #0f4422 100%)', color: '#fff', borderRadius: '18px', padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+            {/* Subtle pattern overlay */}
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)', pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 1 }}>
               <div>
                 <h3 style={{ fontSize: '1.15rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
                   <Zap size={18} />
                   Agrivo Hybrid AI Engine
                 </h3>
                 <p style={{ fontSize: '0.85rem', opacity: 0.9, marginTop: '0.25rem', margin: 0 }}>
-                  Calculate precision irrigation recommendations using XGBoost + Rule Engine.
+                  Rule Engine (constraint filter) + XGBoost ML (keputusan final) — input otomatis dari cuaca & data lahan Anda.
                 </p>
               </div>
               <button
                 onClick={handleGenerate}
                 disabled={generating}
                 style={{
-                  background: '#fff',
+                  background: generating ? 'rgba(255,255,255,0.9)' : '#fff',
                   color: '#14532D',
                   border: 'none',
                   borderRadius: '10px',
@@ -170,17 +213,18 @@ export default function RecommendationsPage() {
                   cursor: generating ? 'not-allowed' : 'pointer',
                   boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
                   opacity: generating ? 0.8 : 1,
+                  transition: 'all 0.2s',
                 }}
               >
                 {generating ? (
                   <>
-                    <Loader size={16} className="animate-spin" />
-                    Calculating...
+                    <Loader size={16} className="rp-spin" />
+                    Memproses...
                   </>
                 ) : (
                   <>
                     <Zap size={16} />
-                    Run AI Engine
+                    Jalankan AI Engine
                   </>
                 )}
               </button>
@@ -188,8 +232,46 @@ export default function RecommendationsPage() {
           </div>
         )}
 
+        {/* ── Generating Overlay ── */}
+        {generating && (
+          <div className="rp-gen-overlay">
+            <div className="rp-gen-card">
+              <div className="rp-gen-header">
+                <div className="rp-gen-pulse" />
+                <h3 className="rp-gen-title">AI Engine sedang bekerja...</h3>
+                <p className="rp-gen-subtitle">Proses ini membutuhkan waktu 30–60 detik. Mohon tunggu.</p>
+              </div>
+              <div className="rp-gen-steps">
+                {GENERATE_STEPS.map((step, i) => {
+                  const StepIcon = step.icon;
+                  const isDone = genStep > i;
+                  const isActive = genStep === i;
+                  return (
+                    <div key={i} className={`rp-gen-step ${isDone ? 'done' : ''} ${isActive ? 'active' : ''}`}>
+                      <div className="rp-gen-step-icon">
+                        {isDone ? (
+                          <CheckCircle size={20} />
+                        ) : isActive ? (
+                          <Loader size={20} className="rp-spin" />
+                        ) : (
+                          <StepIcon size={20} />
+                        )}
+                      </div>
+                      <div className="rp-gen-step-text">
+                        <span className="rp-gen-step-label">{step.label}</span>
+                        <span className="rp-gen-step-desc">{step.desc}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
-          <div style={{ padding: '1rem', background: '#fdf2f0', color: '#C0392B', borderRadius: '16px', border: '1px solid #e8b4b0' }}>
+          <div style={{ padding: '1rem', background: '#fdf2f0', color: '#C0392B', borderRadius: '16px', border: '1px solid #e8b4b0', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AlertCircle size={18} />
             {error}
           </div>
         )}
@@ -288,7 +370,7 @@ export default function RecommendationsPage() {
             <SparklesIcon />
             <h3 style={{ margin: '1rem 0 0.5rem', fontWeight: 700 }}>Belum ada rekomendasi</h3>
             <p style={{ color: '#787878', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Silakan tekan tombol "Jalankan AI Engine" di atas untuk menghasilkan rekomendasi irigasi pertama Anda.
+              Silakan tekan tombol &quot;Jalankan AI Engine&quot; di atas untuk menghasilkan rekomendasi irigasi pertama Anda.
             </p>
           </div>
         )}
@@ -364,6 +446,52 @@ export default function RecommendationsPage() {
         .rp-rec-right { display: flex; flex-direction: column; align-items: flex-end; gap: .75rem; flex-shrink: 0; }
         .rp-rec-cat { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #a09589; }
 
+        /* ── Generate Overlay ── */
+        .rp-gen-overlay {
+          background: rgba(255,255,255,0.92);
+          backdrop-filter: blur(8px);
+          border-radius: 24px;
+          border: 1px solid #E8E2D9;
+          padding: 2.5rem;
+          box-shadow: 0 8px 32px rgba(20,83,45,0.1);
+        }
+        .rp-gen-card { max-width: 480px; margin: 0 auto; }
+        .rp-gen-header { text-align: center; margin-bottom: 2rem; }
+        .rp-gen-pulse {
+          width: 48px; height: 48px; border-radius: 50%;
+          background: radial-gradient(circle, #14532D, #1a6b3a);
+          margin: 0 auto 1rem;
+          animation: rp-pulse 2s ease-in-out infinite;
+        }
+        @keyframes rp-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(20,83,45,0.4); transform: scale(1); }
+          50% { box-shadow: 0 0 0 16px rgba(20,83,45,0); transform: scale(1.05); }
+        }
+        .rp-gen-title { font-size: 1.2rem; font-weight: 800; color: #14532D; margin: 0 0 0.3rem; }
+        .rp-gen-subtitle { font-size: 0.82rem; color: #787878; margin: 0; }
+
+        .rp-gen-steps { display: flex; flex-direction: column; gap: 0.75rem; }
+        .rp-gen-step {
+          display: flex; align-items: center; gap: 1rem;
+          padding: 0.85rem 1rem; border-radius: 14px;
+          background: #F5F3EF; border: 1px solid #E8E2D9;
+          color: #a09589; transition: all 0.4s ease;
+        }
+        .rp-gen-step.active {
+          background: #e8f5ee; border-color: #14532D;
+          color: #14532D; box-shadow: 0 2px 12px rgba(20,83,45,0.08);
+        }
+        .rp-gen-step.done {
+          background: #f0f7ec; border-color: #c0d9b4; color: #2d6a4f;
+        }
+        .rp-gen-step-icon { flex-shrink: 0; display: flex; align-items: center; }
+        .rp-gen-step-text { display: flex; flex-direction: column; }
+        .rp-gen-step-label { font-size: 0.85rem; font-weight: 700; }
+        .rp-gen-step-desc { font-size: 0.72rem; opacity: 0.75; margin-top: 0.1rem; }
+
+        @keyframes rp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .rp-spin { animation: rp-spin 1s linear infinite; }
+
         @media (max-width: 768px) {
           .rp-header { flex-direction: column; gap: 1rem; }
           .rp-feat-metrics { grid-template-columns: repeat(2, 1fr); }
@@ -393,4 +521,3 @@ function SparklesIcon() {
     </div>
   );
 }
-

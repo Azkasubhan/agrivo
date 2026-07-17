@@ -23,11 +23,13 @@ export function clearAuthToken() {
 
 interface RequestOptions extends RequestInit {
   requireAuth?: boolean;
+  /** Request timeout in milliseconds. Defaults to 30000 (30s). Set 0 to disable. */
+  timeout?: number;
 }
 
 export async function apiClient<T>(
   endpoint: string,
-  { requireAuth = true, ...customConfig }: RequestOptions = {}
+  { requireAuth = true, timeout = 30000, ...customConfig }: RequestOptions = {}
 ): Promise<T> {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -40,16 +42,35 @@ export async function apiClient<T>(
     }
   }
 
+  // Set up abort controller for timeout
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  if (timeout > 0) {
+    timeoutId = setTimeout(() => controller.abort(), timeout);
+  }
+
   const config: RequestInit = {
     ...customConfig,
     headers: {
       ...headers,
       ...customConfig.headers,
     },
+    signal: controller.signal,
   };
 
   const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, config);
+
+  let response: Response;
+  try {
+    response = await fetch(url, config);
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. The server took too long to respond.');
+    }
+    throw err;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -66,3 +87,4 @@ export async function apiClient<T>(
 
   return response.json();
 }
+
