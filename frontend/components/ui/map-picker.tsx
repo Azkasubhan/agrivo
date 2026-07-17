@@ -26,10 +26,10 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '400px', background: '#F0EDE6', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <MapIcon size={48} color="#a09589" style={{ opacity: 0.5, marginBottom: '1rem' }} />
-      <h3 style={{ color: '#161616', fontWeight: 700, marginBottom: '0.5rem' }}>Mode Peta Sederhana</h3>
+      <h3 style={{ color: '#161616', fontWeight: 700, marginBottom: '0.5rem' }}>Simple Map Mode</h3>
       <p style={{ color: '#787878', fontSize: '0.9rem', maxWidth: '340px', textAlign: 'center', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', alignItems: 'flex-start', lineHeight: 1.5 }}>
         <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#b07d10' }} />
-        Plugin peta belum terinstal akibat gangguan jaringan NPM. Anda tetap dapat memasukkan koordinat secara manual.
+        Map plugin is unavailable. Please enter coordinates manually.
       </p>
       
       <div style={{ display: 'flex', gap: '0.75rem', background: '#fff', padding: '1rem', borderRadius: '14px', border: '1px solid #E8E2D9', alignItems: 'flex-end', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
@@ -56,7 +56,7 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
           onClick={handleApply}
           style={{ padding: '0.6rem 1.25rem', background: '#14532D', color: '#fff', borderRadius: '8px', border: 'none', fontWeight: 700, cursor: 'pointer', height: '38px' }}
         >
-          Terapkan
+          Apply
         </button>
       </div>
     </div>

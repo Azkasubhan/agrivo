@@ -22,6 +22,18 @@ const weatherIcon = (c: string) => {
   return '⛅';
 };
 
+const weatherBg = (c: string) => {
+  if (!c) return 'url("https://images.unsplash.com/photo-1534088568595-a066f410cbda?auto=format&fit=crop&w=800&q=80")';
+  const cond = c.toLowerCase();
+  if (cond.includes('sunny') || cond.includes('clear')) 
+    return 'url("https://images.unsplash.com/photo-1601297183305-6df142704ea2?auto=format&fit=crop&w=800&q=80")';
+  if (cond.includes('rain') || cond.includes('drizzle')) 
+    return 'url("https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=800&q=80")';
+  if (cond.includes('cloud')) 
+    return 'url("https://images.unsplash.com/photo-1534088568595-a066f410cbda?auto=format&fit=crop&w=800&q=80")';
+  return 'url("https://images.unsplash.com/photo-1534088568595-a066f410cbda?auto=format&fit=crop&w=800&q=80")';
+};
+
 const urgencyColor = (u: string) => {
   const urg = (u || 'low').toLowerCase();
   if (urg === 'high' || urg === 'urgent') return { bg: '#fdf2f0', border: '#e8b4b0', dot: '#C0392B', label: 'Urgent' };
@@ -165,7 +177,12 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
         </div>
 
         {/* Weather panel */}
-        <div className="db-weather-panel">
+        <div className="db-weather-panel" style={{ 
+          backgroundImage: `linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(255,255,255,0.95)), ${weatherBg(todayWeather.weather_condition)}`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.06)'
+        }}>
           <div className="db-panel-eyebrow">Weather Forecast</div>
           {weather ? (
             <>
@@ -227,8 +244,8 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
       {recommendations.length > 0 && (
         <div className="db-section">
           <div className="db-section-header">
-            <h3 className="db-section-title">Riwayat Rekomendasi</h3>
-            <Link href="/recommendations" className="db-see-all">Buka AI Engine →</Link>
+            <h3 className="db-section-title">Recommendation History</h3>
+            <Link href="/recommendations" className="db-see-all">Open AI Engine →</Link>
           </div>
           <div className="db-alerts-list">
             {recommendations.map(rec => {
@@ -245,7 +262,7 @@ export function DashboardContent({ fields, selectedFieldId, onFieldSelect, weath
                       <span className="db-alert-tag">{dateObj.toLocaleDateString()}</span>
                       {rec.prediction && (
                         <>
-                          <span className="db-alert-tag">💧 {Math.round(rec.prediction.water_saving_percent)}% Hemat Air</span>
+                          <span className="db-alert-tag">💧 {Math.round(rec.prediction.water_saving_percent)}% Water Saved</span>
                           <span className="db-alert-tag">🌾 {parseFloat(rec.prediction.expected_yield_ton_per_ha).toFixed(1)} t/ha</span>
                         </>
                       )}

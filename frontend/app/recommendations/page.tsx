@@ -16,10 +16,10 @@ const STRATEGIES = [
 ];
 
 const GENERATE_STEPS = [
-  { icon: Cloud, label: 'Mengambil data cuaca real-time', desc: 'Forecast 14 hari & historis 30 hari dari Open-Meteo' },
-  { icon: Cpu, label: 'Menjalankan Rule Engine', desc: 'Filter constraint ilmiah berbasis riset IRRI' },
-  { icon: Sparkles, label: 'ML Model inference (XGBoost)', desc: 'Prediksi strategi optimal, yield, dan emisi GWP' },
-  { icon: Database, label: 'Menyimpan rekomendasi', desc: 'Menyimpan hasil ke database untuk riwayat' },
+  { icon: Cloud, label: 'Fetching weather data', desc: '14-day forecast & 30-day history' },
+  { icon: Cpu, label: 'Running Rule Engine', desc: 'Filtering by scientific constraints' },
+  { icon: Sparkles, label: 'ML Inference (XGBoost)', desc: 'Predicting strategy, yield & GWP' },
+  { icon: Database, label: 'Saving recommendation', desc: 'Storing result to history' },
 ];
 
 const urgencyStyle = (u: string) => {
@@ -57,7 +57,7 @@ export default function RecommendationsPage() {
         }
       } catch (err) {
         console.error('Failed to load fields', err);
-        setError('Gagal memuat data lahan. Pastikan Anda sudah login.');
+        setError('Failed to load fields. Please ensure you are logged in.');
       } finally {
         setLoadingFields(false);
       }
@@ -74,7 +74,7 @@ export default function RecommendationsPage() {
       setRecommendations(res.data.items);
     } catch (err) {
       console.error('Failed to load recommendations', err);
-      setError('Gagal memuat rekomendasi.');
+      setError('Failed to load recommendations.');
     } finally {
       setLoadingRecs(false);
     }
@@ -124,9 +124,9 @@ export default function RecommendationsPage() {
     } catch (err: any) {
       console.error('Failed to generate recommendation', err);
       if (err.message?.includes('timed out')) {
-        setError('Proses AI Engine memakan waktu terlalu lama. Silakan coba lagi.');
+        setError('AI Engine timed out. Please try again.');
       } else {
-        setError(err.message || 'Gagal menjalankan AI Engine.');
+        setError(err.message || 'Failed to run AI Engine.');
       }
     } finally {
       if (genTimerRef.current) clearInterval(genTimerRef.current);
@@ -146,7 +146,7 @@ export default function RecommendationsPage() {
       await fetchRecommendations(selectedFieldId);
     } catch (err: any) {
       console.error('Failed to save recommendation', err);
-      setError(err.message || 'Gagal menyimpan rekomendasi.');
+      setError(err.message || 'Failed to save recommendation.');
     } finally {
       setSavingRec(false);
     }
@@ -198,7 +198,7 @@ export default function RecommendationsPage() {
               </div>
               <div style={{ flex: 1, maxWidth: '280px' }}>
                 <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#a09589', marginBottom: '0.25rem' }}>
-                  Lahan Aktif
+                  Active Field
                 </span>
                 <CustomSelect
                   value={selectedFieldId}
@@ -211,7 +211,7 @@ export default function RecommendationsPage() {
               </div>
             </div>
           ) : (
-            <div style={{ color: '#787878', fontSize: '0.9rem' }}>Belum ada lahan. Silakan tambah lahan terlebih dahulu.</div>
+            <div style={{ color: '#787878', fontSize: '0.9rem' }}>No fields yet. Please add a field first.</div>
           )}
 
           {/* AI Engine Button */}
@@ -249,12 +249,12 @@ export default function RecommendationsPage() {
                 {generating ? (
                   <>
                     <Loader size={18} className="rp-spin" />
-                    Memproses...
+                    Processing...
                   </>
                 ) : (
                   <>
                     <Sparkles size={18} />
-                    Jalankan AI Engine
+                    Run AI Engine
                   </>
                 )}
               </button>
@@ -268,8 +268,8 @@ export default function RecommendationsPage() {
             <div className="rp-gen-card">
               <div className="rp-gen-header">
                 <div className="rp-gen-pulse" />
-                <h3 className="rp-gen-title">AI Engine sedang bekerja...</h3>
-                <p className="rp-gen-subtitle">Proses ini membutuhkan waktu 30–60 detik. Mohon tunggu.</p>
+                <h3 className="rp-gen-title">AI Engine is running...</h3>
+                <p className="rp-gen-subtitle">This takes about 30–60 seconds. Please wait.</p>
               </div>
               <div className="rp-gen-steps">
                 {GENERATE_STEPS.map((step, i) => {
@@ -317,7 +317,7 @@ export default function RecommendationsPage() {
                   disabled={savingRec}
                   style={{ background: '#fff', border: '1px solid #E8E2D9', color: '#787878', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
                 >
-                  Buang
+                  Discard
                 </button>
                 <button
                   onClick={handleSavePreview}
@@ -325,7 +325,7 @@ export default function RecommendationsPage() {
                   style={{ background: '#14532D', border: 'none', color: '#fff', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', display: 'flex', gap: '0.5rem', alignItems: 'center', transition: 'all 0.2s', boxShadow: '0 4px 10px rgba(20,83,45,0.2)' }}
                 >
                   {savingRec ? <Loader size={16} className="rp-spin" /> : <CheckCircle size={16} />}
-                  Simpan Rekomendasi
+                  Save Strategy
                 </button>
               </div>
             </div>
@@ -339,17 +339,17 @@ export default function RecommendationsPage() {
                 <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
                   <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>💧</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>{Math.round(previewRec.prediction.water_saving_percent)}%</div>
-                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Hemat Air</div>
+                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Water Saved</div>
                 </div>
                 <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
                   <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🌾</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>{parseFloat(previewRec.prediction.expected_yield_ton_per_ha).toFixed(1)} t/ha</div>
-                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Prediksi Yield</div>
+                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Expected Yield</div>
                 </div>
                 <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '14px', border: '1px solid #E8E2D9', flex: 1, minWidth: '160px' }}>
                   <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>🌍</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#161616' }}>-{Math.round(previewRec.prediction.net_gwp_reduction_percent)}%</div>
-                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Reduksi Emisi</div>
+                  <div style={{ fontSize: '0.85rem', color: '#787878', fontWeight: 600 }}>Emissions Cut</div>
                 </div>
               </div>
             )}
@@ -365,7 +365,7 @@ export default function RecommendationsPage() {
 
         {loadingRecs ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: '#14532D', fontWeight: 600 }}>
-            Memuat daftar rekomendasi...
+            Loading history...
           </div>
         ) : latestRec ? (
           <>
@@ -373,15 +373,15 @@ export default function RecommendationsPage() {
             <div className="rp-featured">
               <div className="rp-featured-header">
                 <div className="rp-featured-left">
-                  <span className="rp-feat-tag">Rekomendasi Utama Saat Ini</span>
+                  <span className="rp-feat-tag">Today's Strategy</span>
                   <h2 className="rp-feat-title">{latestRec.recommended_strategy_display}</h2>
                   <p className="rp-feat-desc" style={{ color: '#555', fontStyle: 'italic', marginBottom: '1rem' }}>
-                    {latestRec.description || 'Sedang memuat justifikasi...'}
+                    {latestRec.description || 'Loading justification...'}
                   </p>
                   
                   {latestRec.explanation && (
                     <div style={{ background: '#FAF8F3', padding: '1rem', borderRadius: '12px', border: '1px solid #E8E2D9', marginTop: '1rem' }}>
-                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>Cara Implementasi:</h4>
+                      <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>How to implement:</h4>
                       <p style={{ fontSize: '0.8rem', color: '#666', lineHeight: 1.5 }}>
                         {latestRec.explanation.how_to_implement}
                       </p>
@@ -424,7 +424,7 @@ export default function RecommendationsPage() {
             {/* Previous Recommendations History */}
             {previousRecs.length > 0 && (
               <div className="rp-section">
-                <h3 className="rp-section-title">Riwayat Rekomendasi</h3>
+                <h3 className="rp-section-title">Recommendation History</h3>
                 <div className="rp-rec-list">
                   {previousRecs.map(rec => {
                     const us = urgencyStyle(rec.urgency);
