@@ -116,12 +116,27 @@ export default function RecommendationsPage() {
     try {
       // 120 second timeout — AI Engine can take 30-60s
       // We call POST without preview=true so that it is persisted instantly as active
-      await apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations`, {
+      const res = await apiClient<{ data: any }>(`/fields/${selectedFieldId}/recommendations`, {
         method: 'POST',
         timeout: 120000,
       });
       if (genTimerRef.current) clearInterval(genTimerRef.current);
       setGenStep(GENERATE_STEPS.length); // all done
+
+      // Trigger Native Desktop Notification immediately
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          const activeField = fields.find(f => f.id === selectedFieldId);
+          const fieldName = activeField ? activeField.name : "your field";
+          const strategyName = res.data?.recommended_strategy_display || "New Strategy";
+          
+          new Notification("Agrivo AI Recommendation", {
+            body: `Strategy for "${fieldName}" updated to: ${strategyName}`,
+            icon: '/favicon.ico'
+          });
+        }
+      }
+
       await fetchRecommendations(selectedFieldId);
     } catch (err: any) {
       console.error('Failed to generate recommendation', err);

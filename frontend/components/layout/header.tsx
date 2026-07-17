@@ -26,6 +26,8 @@ export function Header() {
   const [userInitials, setUserInitials] = useState('FH');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
+  const shownNotifsRef = useRef<Set<string>>(new Set());
+  const isInitialFetchRef = useRef(true);
 
   // Settings states matching DB fields
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
@@ -80,8 +82,35 @@ export function Header() {
     try {
       const res = (await apiClient('/notifications?page=1&page_size=15')) as any;
       if (res.success && res.data?.items) {
-        setNotifications(res.data.items);
-        const unread = res.data.items.filter((item: NotificationItem) => !item.is_read).length;
+        const fetchedItems: NotificationItem[] = res.data.items;
+
+        // If it is the initial fetch, record existing IDs to prevent backlog notification spam
+        if (isInitialFetchRef.current) {
+          fetchedItems.forEach(item => {
+            shownNotifsRef.current.add(item.id);
+          });
+          isInitialFetchRef.current = false;
+        } else {
+          // Check for actually new unread notifications
+          fetchedItems.forEach(item => {
+            if (!item.is_read && !shownNotifsRef.current.has(item.id)) {
+              shownNotifsRef.current.add(item.id);
+              
+              // Trigger Native Desktop Notification if enabled
+              if (whatsappEnabled && typeof window !== 'undefined' && 'Notification' in window) {
+                if (Notification.permission === 'granted') {
+                  new Notification("Agrivo Alert", {
+                    body: item.message,
+                    icon: '/favicon.ico'
+                  });
+                }
+              }
+            }
+          });
+        }
+
+        setNotifications(fetchedItems);
+        const unread = fetchedItems.filter((item: NotificationItem) => !item.is_read).length;
         setUnreadCount(unread);
       }
     } catch (err) {
@@ -217,7 +246,15 @@ export function Header() {
                     <input
                       type="checkbox"
                       checked={whatsappEnabled}
-                      onChange={(e) => setWhatsappEnabled(e.target.checked)}
+                      onChange={async (e) => {
+                        const checked = e.target.checked;
+                        setWhatsappEnabled(checked);
+                        if (checked && typeof window !== 'undefined' && 'Notification' in window) {
+                          if (Notification.permission === 'default') {
+                            await Notification.requestPermission();
+                          }
+                        }
+                      }}
                     />
                     Enable System Alerts
                   </label>
