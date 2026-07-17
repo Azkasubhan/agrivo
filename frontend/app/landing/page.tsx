@@ -267,57 +267,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── AI RECOMMENDATION SHOWCASE ───────────────────────── */}
-      <section id="recommendation" className="ag-rec-section" ref={rec.ref}>
-        <div className={`ag-rec-inner${rec.visible ? ' visible' : ''}`}>
-          <div className="ag-rec-showcase-card animate-fade-up">
-            <div className="ag-section-eyebrow">AI Engine</div>
-            <h2 className="ag-section-h2" style={{ textAlign: 'center', marginBottom: '1rem' }}>One clear recommendation, every morning.</h2>
-            <p className="ag-body-text" style={{ maxWidth: '600px', margin: '0 auto 1.5rem', textAlign: 'center' }}>
-              AGRIVO synthesizes dozens of data streams into a single, actionable recommendation
-              delivered to every farmer before 6 AM. No dashboards to parse. No jargon.
-              Just clear guidance in your language.
-            </p>
-            <div className="ag-rec-data-sources">
-              {['Soil Moisture Sensor', '7-Day Weather Forecast', 'Crop Growth Stage', 'Historical Yield Data', 'GWP Database'].map(s => (
-                <div key={s} className="ag-data-source">
-                  <div className="ag-data-dot" />
-                  <span>{s}</span>
-                </div>
-              ))}
-            </div>
-            <div className="ag-whatsapp-note">
-              <span className="wa-icon">📱</span>
-              <span>Delivered via <strong>WhatsApp</strong> in Bahasa Indonesia — no app download required.</span>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* ── ENVIRONMENTAL IMPACT SECTION REMOVED ── */}
 
-      {/* ── EDUCATION ────────────────────────────────────────── */}
-      <section id="education" className="ag-edu-section" ref={edu.ref}>
-        <div className="ag-edu-header">
-          <div className="ag-section-eyebrow">Learning Hub</div>
-          <h2 className="ag-section-h2-center">Grow your knowledge<br />alongside your rice.</h2>
-        </div>
-        <div className={`ag-edu-grid${edu.visible ? ' visible' : ''}`}>
-          {EDU_ARTICLES.map((a, i) => (
-            <div key={a.title} className="ag-edu-card" style={{ animationDelay: `${i * 0.08}s` }}>
-              <div className="ag-edu-img-wrap">
-                <Image src={a.img} alt={a.title} fill className="ag-edu-img" />
-                <div className="ag-edu-img-overlay" />
-              </div>
-              <div className="ag-edu-body">
-                <div className="ag-edu-tag">{a.tag}</div>
-                <h3 className="ag-edu-title">{a.title}</h3>
-                <div className="ag-edu-meta">{a.time}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── TESTIMONIAL ──────────────────────────────────────── */}
       <section className="ag-testi-section" ref={testi.ref}>
