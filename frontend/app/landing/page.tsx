@@ -47,10 +47,10 @@ function useInView(threshold = 0.15) {
 }
 
 const FEATURES = [
-  { icon: '🌾', title: 'AI Irrigation Recommendation', desc: 'Our model analyzes soil moisture, rainfall forecasts, and crop growth stage to recommend the optimal irrigation strategy—updated daily.', img: '/irrigation-water.png', side: 'right' },
-  { icon: '🌤️', title: 'Weather Intelligence', desc: '7-day hyper-local forecast integrated directly into decisions. Rain events automatically adjust recommendations before you even open the app.', img: '/rice-field-editorial.png', side: 'left' },
-  { icon: '🛰️', title: 'Field Monitoring', desc: "Track every plot's soil moisture, temperature, and nutrient levels. Know the exact status of each paddy at a glance.", img: '/rice-terraces-hero.png', side: 'right' },
-  { icon: '🌍', title: 'Environmental Impact', desc: 'Measure your methane reduction, N₂O emissions, and net GWP savings. Every decision comes with a sustainability score.', img: '/rice-harvest-golden.png', side: 'left' },
+  { title: 'AI Irrigation Recommendation', desc: 'Our model analyzes soil moisture, rainfall forecasts, and crop growth stage to recommend the optimal irrigation strategy—updated daily.', img: '/irrigation-water.png', side: 'right' },
+  { title: 'Weather Intelligence', desc: '7-day hyper-local forecast integrated directly into decisions. Rain events automatically adjust recommendations before you even open the app.', img: '/rice-field-editorial.png', side: 'left' },
+  { title: 'Field Monitoring', desc: "Track every plot's soil moisture, temperature, and nutrient levels. Know the exact status of each paddy at a glance.", img: '/rice-terraces-hero.png', side: 'right' },
+  { title: 'Environmental Impact', desc: 'Measure your methane reduction, N₂O emissions, and net GWP savings. Every decision comes with a sustainability score.', img: '/rice-harvest-golden.png', side: 'left' },
 ];
 
 const EDU_ARTICLES = [
@@ -227,6 +227,11 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── SEPARATOR ── */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 5%' }}>
+        <hr style={{ border: 'none', borderTop: '1px solid #E8E2D9', margin: '1rem 0 3rem 0' }} />
+      </div>
+
       {/* ── FEATURES ─────────────────────────────────────────── */}
       <section id="features" className="ag-features" ref={features.ref}>
         <div className="ag-features-header">
@@ -234,35 +239,32 @@ export default function LandingPage() {
           <h2 className="ag-section-h2-center">Every tool a<br />rice farmer needs.</h2>
         </div>
 
-        {FEATURES.map((f, i) => (
-          <div key={f.title} className={`ag-feature-row${features.visible ? ' visible' : ''}`} style={{ animationDelay: `${i * 0.1}s` }}>
-            {f.side === 'right' ? (
-              <>
-                <div className="ag-feature-text">
-                  <div className="ag-feature-icon">{f.icon}</div>
-                  <h3 className="ag-feature-h3">{f.title}</h3>
-                  <p className="ag-body-text">{f.desc}</p>
-                  <Link href={targetLink} className="ag-link-arrow">Learn more →</Link>
-                </div>
-                <div className="ag-feature-img-wrap">
-                  <Image src={f.img} alt={f.title} fill className="ag-rounded-img" />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="ag-feature-img-wrap">
-                  <Image src={f.img} alt={f.title} fill className="ag-rounded-img" />
-                </div>
-                <div className="ag-feature-text">
-                  <div className="ag-feature-icon">{f.icon}</div>
-                  <h3 className="ag-feature-h3">{f.title}</h3>
-                  <p className="ag-body-text">{f.desc}</p>
-                  <Link href={targetLink} className="ag-link-arrow">Learn more →</Link>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem', marginTop: '3rem' }}>
+          {FEATURES.map((f, i) => (
+            <div key={f.title} className={`ag-feature-card ${features.visible ? 'visible' : ''}`} style={{ 
+              animationDelay: `${i * 0.1}s`,
+              background: '#fff',
+              border: '1px solid #E8E2D9',
+              borderRadius: '20px',
+              padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+              opacity: features.visible ? 1 : 0,
+              transform: features.visible ? 'translateY(0)' : 'translateY(20px)'
+            }}>
+              <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: '14px', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                <Image src={f.img} alt={f.title} fill className="ag-rounded-img" style={{ objectFit: 'cover' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 className="ag-feature-h3" style={{ fontSize: '1.2rem', marginBottom: '0.75rem', lineHeight: 1.3 }}>{f.title}</h3>
+                <p className="ag-body-text" style={{ fontSize: '0.9rem', color: '#787878', marginBottom: '1.5rem', lineHeight: 1.5 }}>{f.desc}</p>
+              </div>
+              <Link href={targetLink} className="ag-link-arrow" style={{ marginTop: 'auto', fontWeight: 700 }}>Learn more →</Link>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* ── AI RECOMMENDATION SHOWCASE ───────────────────────── */}
