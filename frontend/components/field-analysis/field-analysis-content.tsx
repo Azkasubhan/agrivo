@@ -336,13 +336,23 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
 
                 <div className="form-group">
                   <label className="form-label">Planting Date *</label>
-                  <input
-                    type="date"
-                    required
-                    value={plantingDate}
-                    onChange={(e) => setPlantingDate(e.target.value)}
-                    className="form-input"
-                  />
+                  <div className="custom-date-wrapper">
+                    <input
+                      type="date"
+                      required
+                      value={plantingDate}
+                      onChange={(e) => setPlantingDate(e.target.value)}
+                      className="form-input custom-date-input"
+                    />
+                    <div className="custom-date-icon-trigger">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -706,6 +716,45 @@ export function FieldAnalysisContent({ fields, onFieldAdded }: Props) {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        .custom-date-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          width: 100%;
+        }
+
+        .custom-date-input {
+          padding-right: 2.5rem;
+          cursor: pointer;
+          font-family: inherit;
+        }
+
+        /* Hide calendar icon and make entire input clickable */
+        .custom-date-input::-webkit-calendar-picker-indicator {
+          background: transparent;
+          bottom: 0;
+          color: transparent;
+          cursor: pointer;
+          height: auto;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: auto;
+          z-index: 2;
+        }
+
+        .custom-date-icon-trigger {
+          position: absolute;
+          right: 1rem;
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #5A6F45;
+          z-index: 1;
         }
 
         @media (max-width: 1024px) {

@@ -81,7 +81,27 @@ export async function apiClient<T>(
       }
     }
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData.detail || `Error ${response.status}: ${response.statusText || 'An error occurred while fetching data'}`;
+    let message = errorData.message || '';
+
+    if (!message && errorData.detail) {
+      if (typeof errorData.detail === 'string') {
+        message = errorData.detail;
+      } else if (Array.isArray(errorData.detail)) {
+        message = errorData.detail
+          .map((err: any) => {
+            const field = err.loc ? err.loc[err.loc.length - 1] : 'field';
+            return `${field}: ${err.msg}`;
+          })
+          .join(', ');
+      } else {
+        message = JSON.stringify(errorData.detail);
+      }
+    }
+
+    if (!message) {
+      message = `Error ${response.status}: ${response.statusText || 'An error occurred while fetching data'}`;
+    }
+
     throw new Error(message);
   }
 
