@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: 'AGRIVO — Climate-Smart Irrigation, Powered by AI',
   description: 'AI-powered climate-smart irrigation recommendation platform for rice farmers. Make data-driven decisions based on weather, soil conditions, and crop growth stage.',
   keywords: 'irrigation, rice farming, climate smart agriculture, AWD, alternate wetting drying, AI farming',
+  icons: {
+    icon: '/icon.png',
+    apple: '/icon.png',
+  }
 }
 
 export const viewport: Viewport = {
