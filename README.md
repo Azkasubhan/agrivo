@@ -42,8 +42,7 @@ AI Engine:
 - **Environmental Impact** — Honest net GWP (CH₄ + N₂O), not just methane reduction claims
 - **Field Management Dashboard** — Monitor soil, crop stage, weather, and recommendation history per field
 - **Preview & Save** — Review AI recommendations before committing to history
-- **System Notifications** — Daily recommendations directly in your dashboard
-- **Automated Daily Cron** — Recommendations generated at 06:00 AM every day
+- **System Notifications** — Daily recommendations directly in your device
 
 ---
 
@@ -58,32 +57,12 @@ AI Engine:
 | Weather | Open-Meteo API (forecast + historical) |
 | Notifications | In-App System Alerts |
 | Migrations | Alembic |
-| Scheduler | APScheduler (daily cron) |
 
 ---
 
 ## Architecture Overview
 
-```
-Frontend (Next.js)
-    │
-    │ REST API + JWT
-    ▼
-Backend (FastAPI)
-  ├── Auth Routes
-  ├── Field Routes
-  ├── Weather Routes
-  ├── Recommendation Routes
-  ├── Notification Routes
-  └── AI Engine
-        ├── RuleEngine (IRRI constraint filter)
-        ├── MLModel (XGBoost inference)
-        ├── ExplanationGenerator (transparent reasoning)
-        └── WeatherService (Open-Meteo integration)
-    │
-    ▼
-PostgreSQL Database
-```
+![System Architecture Diagram](system-architecture.png)
 
 ---
 
