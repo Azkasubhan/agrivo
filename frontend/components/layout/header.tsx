@@ -137,11 +137,6 @@ export function Header() {
   return (
     <header className="ag-header">
       <div className="ag-header-left">
-        <div className="ag-header-search">
-          <Search size={15} className="ag-search-icon" />
-          <input type="text" placeholder="Search fields, recommendations…" className="ag-search-input" />
-          <kbd className="ag-search-kbd">⌘K</kbd>
-        </div>
       </div>
 
       <div className="ag-header-right" ref={dropdownRef}>
