@@ -455,9 +455,9 @@ export default function RecommendationsPage() {
         ) : (
           <div style={{ padding: '4rem', textAlign: 'center', background: '#fff', borderRadius: '24px', border: '1px dashed #E8E2D9' }}>
             <SparklesIcon />
-            <h3 style={{ margin: '1rem 0 0.5rem', fontWeight: 700 }}>Belum ada rekomendasi</h3>
+            <h3 style={{ margin: '1rem 0 0.5rem', fontWeight: 700 }}>No recommendations yet</h3>
             <p style={{ color: '#787878', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              Silakan tekan tombol &quot;Jalankan AI Engine&quot; di atas untuk menghasilkan rekomendasi irigasi pertama Anda.
+              Please click the "Run AI Engine" button above to generate your first irrigation recommendation.
             </p>
           </div>
         )}

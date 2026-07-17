@@ -30,7 +30,7 @@ export default function LoginPage() {
     }
 
     if (!/^[8]\d{7,12}$/.test(formattedPhone)) {
-      setError('Nomor telepon tidak valid. Masukkan nomor tanpa angka 0 di depan (contoh: 8123456789)');
+      setError('Invalid phone number. Enter without leading 0 (e.g., 8123456789)');
       setLoading(false);
       return;
     }

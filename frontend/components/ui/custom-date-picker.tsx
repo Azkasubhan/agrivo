@@ -166,7 +166,7 @@ export function CustomDatePicker({ value, onChange }: CustomDatePickerProps) {
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="datepicker-display-value">
-          {getDisplayDate() || 'Pilih tanggal...'}
+          {getDisplayDate() || 'Select date...'}
         </span>
         <CalendarIcon size={16} className="datepicker-icon" />
       </div>
