@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Navigation } from 'lucide-react';
+import { Navigation, Search } from 'lucide-react';
 
 interface MapPickerProps {
   latitude: number | null;
@@ -15,8 +15,14 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  
   const [locateError, setLocateError] = useState<string | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   // Default coordinate: Center of Indonesia if no coordinate is provided
   const defaultLat = latitude || -2.5489;
@@ -43,11 +49,12 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
       iconAnchor: [18, 30] // anchors bottom-center
     });
 
-    // 1. Initialize Map
+    // 1. Initialize Map and set attributionControl: false to completely remove the attribution text
     const map = L.map(mapContainerRef.current, {
       center: [defaultLat, defaultLng],
       zoom: defaultZoom,
       zoomControl: false, // will position zoom control on bottom-right later
+      attributionControl: false, // removes Esri and Leaflet logo text at bottom right
     });
     mapRef.current = map;
 
@@ -57,12 +64,10 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
     // 2. Define Map Layers
     const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© OpenStreetMap contributors',
     });
 
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
     });
 
     // Default to Satellite View (more useful for looking at crops/fields)
@@ -106,7 +111,7 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
     };
   }, []);
 
-  // Update marker position when prop updates externally (e.g. Locate Me)
+  // Update marker position when prop updates externally (e.g. Locate Me or Search)
   useEffect(() => {
     if (mapRef.current && markerRef.current && latitude && longitude) {
       const curLatLng = markerRef.current.getLatLng();
@@ -116,6 +121,42 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
       }
     }
   }, [latitude, longitude]);
+
+  // Geocoding search using Nominatim API (completely free, no key required)
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'AgrivoFarmApp/1.0'
+          }
+        }
+      );
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        const numLat = parseFloat(lat);
+        const numLng = parseFloat(lon);
+        onChange(parseFloat(numLat.toFixed(6)), parseFloat(numLng.toFixed(6)));
+        
+        if (mapRef.current) {
+          mapRef.current.setView([numLat, numLng], 16);
+        }
+      } else {
+        setSearchError('Location not found. Try a different query.');
+      }
+    } catch (err) {
+      setSearchError('Search failed. Check your internet connection.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // Locate user using Geolocation API
   const handleLocateMe = () => {
@@ -140,16 +181,16 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
         setIsLocating(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setLocateError('GPS permission was denied by the browser.');
+            setLocateError('GPS permission was denied.');
             break;
           case error.POSITION_UNAVAILABLE:
-            setLocateError('GPS position unavailable. Try again.');
+            setLocateError('GPS position unavailable.');
             break;
           case error.TIMEOUT:
             setLocateError('GPS request timed out.');
             break;
           default:
-            setLocateError('An unknown error occurred while locating.');
+            setLocateError('Failed to detect GPS location.');
         }
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -158,6 +199,41 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
 
   return (
     <div className="map-picker-wrapper">
+      {/* Search Bar */}
+      <div className="map-search-bar">
+        <div className="map-search-input-wrapper">
+          <Search size={16} className="map-search-icon" />
+          <input
+            type="text"
+            placeholder="Search location (e.g. Klaten, Yogyakarta, Sleman)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+            className="map-search-input"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleSearch}
+          disabled={isSearching}
+          className="map-search-btn"
+        >
+          {isSearching ? 'Searching...' : 'Search'}
+        </button>
+      </div>
+
+      {searchError && (
+        <div className="map-search-error">
+          ⚠️ {searchError}
+        </div>
+      )}
+
+      {/* Map Container */}
       <div ref={mapContainerRef} className="map-picker-element" />
 
       {/* Locate Me Floating Button */}
@@ -186,11 +262,82 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
           border-radius: 12px;
           overflow: hidden;
           background: #FAF8F3;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Search Bar Styles */
+        .map-search-bar {
+          display: flex;
+          padding: 0.75rem;
+          gap: 0.5rem;
+          background: #FAF8F3;
+          border-bottom: 1px solid #E8E2D9;
+          z-index: 10;
+        }
+
+        .map-search-input-wrapper {
+          position: relative;
+          flex: 1;
+          display: flex;
+          align-items: center;
+        }
+
+        .map-search-icon {
+          position: absolute;
+          left: 10px;
+          color: #787878;
+        }
+
+        .map-search-input {
+          width: 100%;
+          background: #fff;
+          border: 1px solid #E8E2D9;
+          border-radius: 8px;
+          padding: 0.5rem 0.5rem 0.5rem 2rem;
+          font-size: 0.85rem;
+          color: #161616;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+
+        .map-search-input:focus {
+          border-color: #5A6F45;
+        }
+
+        .map-search-btn {
+          background: #5A6F45;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          padding: 0.5rem 1rem;
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+
+        .map-search-btn:hover {
+          background: #475837;
+        }
+
+        .map-search-btn:disabled {
+          background: #a0a0a0;
+          cursor: not-allowed;
+        }
+
+        .map-search-error {
+          background: #FDEDEC;
+          border-bottom: 1px solid #FADBD8;
+          color: #C0392B;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 500;
         }
 
         .map-picker-element {
           width: 100%;
-          height: 280px;
+          height: 250px;
           z-index: 1;
         }
 
@@ -230,8 +377,8 @@ export function MapPicker({ latitude, longitude, onChange }: MapPickerProps) {
 
         .map-error-bubble {
           position: absolute;
-          top: 15px;
-          left: 15px;
+          bottom: 15px;
+          left: 130px;
           z-index: 1000;
           background: #FDEDEC;
           border: 1px solid #FADBD8;
