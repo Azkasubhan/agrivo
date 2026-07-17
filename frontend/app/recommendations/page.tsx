@@ -161,29 +161,30 @@ export default function RecommendationsPage() {
 
   return (
     <MainLayout>
+      <div className="rp-page-bg" />
       <div className="rp-root">
         {/* Header */}
-        <div className="rp-header" style={{ marginBottom: '1.5rem' }}>
-          <div>
-            <p className="rp-eyebrow">AI Recommendations</p>
-            <h1 className="rp-h1">Irrigation Guidance</h1>
-            <p className="rp-desc">Data-driven strategies updated daily based on weather, soil, and crop stage.</p>
+        <div className="rp-header" style={{ marginBottom: '2.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#e8f5ee', color: '#14532D', padding: '0.5rem 1rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', boxShadow: '0 2px 10px rgba(20,83,45,0.1)' }}>
+            <Sparkles size={16} /> Core Feature
           </div>
+          <h1 className="rp-h1" style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 800, letterSpacing: '-0.03em', color: '#161616', margin: '0 0 0.75rem' }}>AI Irrigation Recommendations</h1>
+          <p className="rp-desc" style={{ fontSize: '1.1rem', maxWidth: '650px', color: '#555', lineHeight: 1.6 }}>Your central hub for data-driven strategies updated daily based on weather, soil conditions, and current crop stage.</p>
         </div>
 
         {/* ── Control Panel (Field Selector & AI Engine) ── */}
         <div style={{ 
-          background: '#fff', 
-          border: '1px solid #E8E2D9', 
-          borderRadius: '16px', 
-          padding: '1.25rem 1.5rem', 
+          background: 'linear-gradient(to right, #ffffff, #f0f7ec)', 
+          border: '1px solid #c0d9b4', 
+          borderRadius: '24px', 
+          padding: '1.75rem 2rem', 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
           flexWrap: 'wrap', 
           gap: '1rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-          marginBottom: '2rem'
+          boxShadow: '0 8px 32px rgba(20,83,45,0.08)',
+          marginBottom: '3rem'
         }}>
           {fields.length > 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
@@ -222,23 +223,26 @@ export default function RecommendationsPage() {
                 onClick={handleGenerate}
                 disabled={generating}
                 style={{
-                  background: 'linear-gradient(135deg, #14532D 0%, #1a6b3a 100%)',
+                  background: 'linear-gradient(135deg, #14532D 0%, #0f3d20 100%)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: '10px',
-                  padding: '0.8rem 1.6rem',
-                  fontWeight: 700,
-                  fontSize: '0.95rem',
+                  borderRadius: '12px',
+                  padding: '1rem 2rem',
+                  fontWeight: 800,
+                  fontSize: '1.05rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  gap: '0.6rem',
                   cursor: generating ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 12px rgba(20,83,45,0.2)',
+                  boxShadow: '0 8px 24px rgba(20,83,45,0.35)',
                   opacity: generating ? 0.8 : 1,
                   transition: 'all 0.2s',
-                  minWidth: '200px',
-                  justifyContent: 'center'
+                  minWidth: '230px',
+                  justifyContent: 'center',
+                  transform: generating ? 'none' : 'scale(1)',
                 }}
+                onMouseOver={(e) => { if (!generating) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px rgba(20,83,45,0.45)'; } }}
+                onMouseOut={(e) => { if (!generating) { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(20,83,45,0.35)'; } }}
               >
                 {generating ? (
                   <>
@@ -313,18 +317,18 @@ export default function RecommendationsPage() {
                 <div className="rp-featured-left" style={{ width: '100%' }}>
                   <span className="rp-feat-tag">Current Primary Recommendation</span>
                   <h2 className="rp-feat-title">{latestRec.recommended_strategy_display}</h2>
-                  <p className="rp-feat-desc" style={{ color: '#555', fontStyle: 'italic', marginBottom: '1.25rem' }}>
+                  <p className="rp-feat-desc" style={{ fontStyle: 'italic', marginBottom: '1.25rem' }}>
                     {latestRec.description || 'Loading justification details...'}
                   </p>
                   
                   {latestRec.explanation && (
-                    <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                       {/* Implementation Guide */}
-                      <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
-                        <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>
+                      <div className="rp-feat-inner-card">
+                        <h4 className="rp-feat-inner-title">
                           Implementation Guide
                         </h4>
-                        <p style={{ fontSize: '0.8rem', color: '#555', lineHeight: 1.5, margin: 0 }}>
+                        <p className="rp-feat-inner-text">
                           {latestRec.explanation.how_to_implement}
                         </p>
                       </div>
@@ -333,11 +337,11 @@ export default function RecommendationsPage() {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         {/* Benefits (Yield & Resource Optimization) */}
                         {latestRec.explanation.benefits && latestRec.explanation.benefits.length > 0 && (
-                          <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#14532D', marginBottom: '0.5rem' }}>
+                          <div className="rp-feat-inner-card">
+                            <h4 className="rp-feat-inner-title">
                               Yield and Resource Benefits
                             </h4>
-                            <ol style={{ fontSize: '0.78rem', color: '#555', lineHeight: 1.5, margin: 0, paddingLeft: '1.2rem', listStyleType: 'decimal' }}>
+                            <ol className="rp-feat-inner-list">
                               {latestRec.explanation.benefits.map((b: string, idx: number) => (
                                 <li key={idx} style={{ marginBottom: '0.35rem' }}>{b}</li>
                               ))}
@@ -347,11 +351,11 @@ export default function RecommendationsPage() {
 
                         {/* Trade-offs & Risk Warnings */}
                         {latestRec.explanation.tradeoffs && latestRec.explanation.tradeoffs.length > 0 && (
-                          <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#b07d10', marginBottom: '0.5rem' }}>
+                          <div className="rp-feat-inner-card rp-feat-inner-warning">
+                            <h4 className="rp-feat-inner-title rp-feat-inner-title-warning">
                               Agronomic Considerations and Risks
                             </h4>
-                            <ol style={{ fontSize: '0.78rem', color: '#555', lineHeight: 1.5, margin: 0, paddingLeft: '1.2rem', listStyleType: 'decimal' }}>
+                            <ol className="rp-feat-inner-list">
                               {latestRec.explanation.tradeoffs.map((t: string, idx: number) => (
                                 <li key={idx} style={{ marginBottom: '0.35rem' }}>{t}</li>
                               ))}
@@ -362,11 +366,11 @@ export default function RecommendationsPage() {
 
                       {/* Security Constraints (Why other strategies were excluded to prevent failure) */}
                       {latestRec.explanation.rule_constraints_applied && latestRec.explanation.rule_constraints_applied.length > 0 && (
-                        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9' }}>
-                          <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#161616', marginBottom: '0.5rem' }}>
+                        <div className="rp-feat-inner-card">
+                          <h4 className="rp-feat-inner-title">
                             Crop Protection and Safeguards
                           </h4>
-                          <ol style={{ fontSize: '0.78rem', color: '#555', lineHeight: 1.5, margin: 0, paddingLeft: '1.2rem', listStyleType: 'decimal' }}>
+                          <ol className="rp-feat-inner-list">
                             {latestRec.explanation.rule_constraints_applied.map((reason: string, idx: number) => (
                               <li key={idx} style={{ marginBottom: '0.35rem' }}>{reason}</li>
                             ))}
@@ -376,7 +380,7 @@ export default function RecommendationsPage() {
 
                       {/* Social Governance note for communal systems */}
                       {latestRec.explanation.governance_note && (
-                        <div style={{ background: '#fff', padding: '1.25rem', borderRadius: '16px', border: '1px solid #E8E2D9', fontSize: '0.78rem', color: '#555', lineHeight: 1.5 }}>
+                        <div className="rp-feat-inner-card">
                           <strong>Water Supply Coordination:</strong> {latestRec.explanation.governance_note}
                         </div>
                       )}
@@ -392,7 +396,7 @@ export default function RecommendationsPage() {
                     { icon:'🌾', val:`${latestRec.prediction.expected_yield_ton_per_ha} t/ha`, lbl:'Expected Yield' },
                     { icon:'🌍', val:`-${latestRec.prediction.net_gwp_reduction_percent}%`, lbl:'Net GWP Reduction' },
                   ].map(m => (
-                    <div key={m.lbl} className="rp-feat-metric" style={{ background: '#fff', borderColor: '#E8E2D9' }}>
+                    <div key={m.lbl} className="rp-feat-metric-card">
                       <div className="rp-fm-icon">{m.icon}</div>
                       <div className="rp-fm-val">{m.val}</div>
                       <div className="rp-fm-lbl">{m.lbl}</div>
@@ -482,27 +486,62 @@ export default function RecommendationsPage() {
       </div>
 
       <style>{`
-        .rp-root { display: flex; flex-direction: column; gap: 2.5rem; }
+        .rp-page-bg {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: url('/rice-terraces-hero.png') center/cover no-repeat;
+          opacity: 0.15;
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .rp-root { display: flex; flex-direction: column; gap: 2.5rem; position: relative; z-index: 1; }
 
         .rp-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .rp-eyebrow { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #14532D; margin-bottom: .4rem; }
         .rp-h1 { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 800; letter-spacing: -.025em; color: #161616; margin: 0 0 .4rem; }
         .rp-desc { font-size: .9rem; color: #787878; }
 
-        .rp-featured { background: #fff; border: 1px solid #E8E2D9; border-radius: 24px; padding: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
-        .rp-featured-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 2rem; }
-        .rp-feat-tag { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #14532D; background: #e8f5ee; padding: .3rem .75rem; border-radius: 999px; display: inline-block; margin-bottom: .75rem; }
-        .rp-feat-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; color: #161616; margin: 0 0 .75rem; }
-        .rp-feat-desc { font-size: .875rem; color: #787878; line-height: 1.75; margin: 0; }
+        .rp-featured { 
+          background: linear-gradient(145deg, #0f3d20 0%, #165c30 100%); 
+          color: #fff; 
+          border: none; 
+          border-radius: 28px; 
+          padding: 2.5rem; 
+          box-shadow: 0 12px 32px rgba(20,83,45,0.25); 
+          position: relative;
+          overflow: hidden;
+        }
+        .rp-featured::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
+          opacity: 0.7;
+          pointer-events: none;
+        }
+        .rp-featured-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; gap: 2rem; position: relative; z-index: 1; }
+        .rp-feat-tag { font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #0f3d20; background: #c0d9b4; padding: .4rem .85rem; border-radius: 999px; display: inline-block; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .rp-feat-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; color: #fff; margin: 0 0 .75rem; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .rp-feat-desc { font-size: .95rem; color: #e0f0d8; line-height: 1.75; margin: 0; }
+        
+        .rp-feat-inner-card { background: rgba(255,255,255,0.08); padding: 1.25rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(8px); }
+        .rp-feat-inner-title { font-size: 0.85rem; font-weight: 700; color: #e0f0d8; margin-bottom: 0.6rem; margin-top: 0; text-transform: uppercase; letter-spacing: 0.05em; }
+        .rp-feat-inner-text { font-size: 0.85rem; color: #fff; line-height: 1.6; margin: 0; }
+        .rp-feat-inner-list { font-size: 0.85rem; color: #fff; line-height: 1.6; margin: 0; padding-left: 1.2rem; list-style-type: decimal; }
+        .rp-feat-inner-warning { background: rgba(253, 240, 208, 0.1); border-color: rgba(253, 240, 208, 0.2); }
+        .rp-feat-inner-title-warning { color: #fdf0d0; }
+
         .rp-conf-wrap { display: flex; flex-direction: column; align-items: center; gap: .3rem; flex-shrink: 0; }
         .rp-conf-circle { position: relative; }
         .rp-conf-pct { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1rem; font-weight: 800; color: #14532D; }
         .rp-conf-lbl { font-size: .65rem; color: #a09589; font-weight: 600; }
-        .rp-feat-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-        .rp-feat-metric { border-radius: 16px; padding: 1.25rem; text-align: center; border: 1px solid #E8E2D9; }
-        .rp-fm-icon { font-size: 1.4rem; margin-bottom: .4rem; }
-        .rp-fm-val { font-size: 1.3rem; font-weight: 800; color: #161616; }
-        .rp-fm-lbl { font-size: .68rem; color: #787878; margin-top: .2rem; }
+        
+        .rp-feat-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; position: relative; z-index: 1; margin-top: 1.5rem; }
+        .rp-feat-metric-card { border-radius: 16px; padding: 1.5rem; text-align: center; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(10px); }
+        .rp-fm-icon { font-size: 1.8rem; margin-bottom: .6rem; }
+        .rp-fm-val { font-size: 1.5rem; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .rp-fm-lbl { font-size: .75rem; color: #e0f0d8; margin-top: .3rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
         .rp-section { display: flex; flex-direction: column; gap: 1rem; }
         .rp-section-title { font-size: 1.1rem; font-weight: 800; color: #161616; margin: 0; }

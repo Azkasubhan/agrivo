@@ -70,8 +70,11 @@ export function Sidebar() {
       <style>{`
         .ag-sidebar {
           width: 240px;
-          background: #ffffff;
-          border-right: 1px solid #E8E2D9;
+          background: rgba(255, 255, 255, 0.35);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border-right: 1px solid rgba(255, 255, 255, 0.6);
+          box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03);
           display: flex;
           flex-direction: column;
           height: 100vh;
@@ -86,7 +89,7 @@ export function Sidebar() {
           align-items: center;
           justify-content: space-between;
           padding: 1.5rem 1rem 1rem;
-          border-bottom: 1px solid #F0EDE6;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.4);
           flex-shrink: 0;
           position: relative;
           min-height: 73px;
@@ -174,7 +177,7 @@ export function Sidebar() {
  
         .ag-sidebar-bottom {
           padding: 1rem .75rem 1.5rem;
-          border-top: 1px solid #F0EDE6;
+          border-top: 1px solid rgba(255, 255, 255, 0.4);
           flex-shrink: 0;
         }
         .ag-sidebar.collapsed .ag-sidebar-bottom {
