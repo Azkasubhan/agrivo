@@ -9,18 +9,18 @@ import { getAuthToken } from '@/lib/api-client';
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    
+
     // Pengecekan instan jika elemen sudah ada di viewport (misal: scroll restoration dari tombol back)
     const rect = el.getBoundingClientRect();
     if (rect.top < window.innerHeight && rect.bottom >= 0) {
       setVisible(true);
       return;
     }
-    
+
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -64,7 +64,7 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
+
   useEffect(() => {
     setIsLoggedIn(!!getAuthToken());
   }, []);
@@ -135,22 +135,6 @@ export default function LandingPage() {
           <div className="ag-hero-fade" />
         </div>
 
-        {/* Floating stat cards */}
-        <div className="ag-hero-stats">
-          {[
-            { label: 'Water Saved', value: '38%', sub: 'vs. continuous flood' },
-            { label: 'Active Farmers', value: '12,400+', sub: 'across Indonesia' },
-            { label: 'GWP Reduction', value: '24%', sub: 'net greenhouse gas' },
-            { label: 'AI Accuracy', value: '92%', sub: 'recommendation precision' },
-          ].map((s, i) => (
-            <div key={s.label} className="ag-stat-card" style={{ animationDelay: `${i * 0.5}s` }}>
-              <div className="ag-stat-value">{s.value}</div>
-              <div className="ag-stat-label">{s.label}</div>
-              <div className="ag-stat-sub">{s.sub}</div>
-            </div>
-          ))}
-        </div>
-
         {/* Main hero copy */}
         <div className="ag-hero-copy">
           <div className="ag-hero-eyebrow">Climate-Smart Agriculture · AI-Powered</div>
@@ -219,10 +203,6 @@ export default function LandingPage() {
             <div className="ag-about-img-frame">
               <Image src="/rice-field-editorial.png" alt="Rice paddy fields" fill className="ag-rounded-img" />
             </div>
-            <div className="ag-about-badge">
-              <span className="ag-badge-num">12,400+</span>
-              <span className="ag-badge-txt">Farmers Trust AGRIVO</span>
-            </div>
           </div>
         </div>
       </section>
@@ -241,7 +221,7 @@ export default function LandingPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '2rem', marginTop: '3rem' }}>
           {FEATURES.map((f, i) => (
-            <div key={f.title} className={`ag-feature-card ${features.visible ? 'visible' : ''}`} style={{ 
+            <div key={f.title} className={`ag-feature-card ${features.visible ? 'visible' : ''}`} style={{
               animationDelay: `${i * 0.1}s`,
               background: '#fff',
               border: '1px solid #E8E2D9',
